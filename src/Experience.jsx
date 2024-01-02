@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
-import { Physics, RigidBody, quat, vec3 } from '@react-three/rapier'
+import { CuboidCollider, Physics, RigidBody, quat, vec3 } from '@react-three/rapier'
 import { useEffect, useRef, useState } from 'react'
 import { Vector3 } from 'three'
 import D20, { FACE_ID_LOOKUP } from './components/D20'
@@ -29,30 +29,28 @@ const Experience = () => {
 
     // randomize the roll position
     const roll_start_pos = new Vector3(
-      d20_start.pos.x + randomFloat(-3, 3), // roll left/right position
-      d20_start.pos.y + randomFloat(-3, 1), // roll height
-      d20_start.pos.z + randomFloat(8, 12) // how far back to roll
+      randomFloat(-5, 5), // roll left/right position
+      6, // roll height
+      6 // how far back to roll
     )
 
     // reset the d20
-    // ref_d20_body.current.setTranslation(d20_start.pos, true)
     ref_d20_body.current.setTranslation(roll_start_pos, true)
     ref_d20_body.current.setRotation(d20_start.quatertion, true)
     ref_d20_body.current.setAngvel({ x: 0, y: 0, z: 0 })
     ref_d20_body.current.setLinvel({ x: 0, y: 0, z: 0 })
 
-
     // apply a random force and spin
     ref_d20_body.current.applyImpulse({
-      x: randomFloat(-10, 10), // left/right force
-      y: 0,
-      z: randomFloat(-40, -10) // forward force
+      x: randomFloat(-100, 100), // left/right force
+      y: randomFloat(-70, 10), // upward force
+      z: randomFloat(-150, -80) // forward force
     }, true)
 
     ref_d20_body.current.applyTorqueImpulse({
       x: randomFloat(-20, -5), // forward spin
       y: 0,
-      z: randomFloat(-10, 10) // left/right spin
+      z: randomFloat(-12, 12) // left/right spin
     }, true)
   }
 
@@ -110,9 +108,9 @@ const Experience = () => {
         onClick={rollD20}
         onSleep={onRollComplete}
         onContactForce={(payload) => { handleDiceSound(payload.totalForceMagnitude) }}
-        mass={1.5}
-        restitution={0.3}
-        friction={0.2}
+        mass={1}
+        restitution={0.2}
+        friction={0.3}
       >
         <D20
           child_ref={ref_d20_mesh}
@@ -122,12 +120,36 @@ const Experience = () => {
 
       </RigidBody>
 
-      {/* WALL */}
-      <RigidBody>
-        <mesh castShadow position={[0, 6, -7.7]}>
-          <boxGeometry args={[16, 4, 0.6]} />
-          <meshStandardMaterial color='mediumpurple' />
-        </mesh>
+      {/* WALLS + TOP */}
+      <RigidBody
+        type='fixed'
+        restitution={0.1}
+        friction={0.3}
+      >
+        <CuboidCollider
+          args={[7.3, 4, 0.3]}
+          position={[0, 4.3, -7.7]}
+        />
+        <CuboidCollider
+          args={[7.3, 4, 0.3]}
+          position={[0, 4.3, 7.7]}
+        />
+        <CuboidCollider
+          args={[7.3, 4, 0.3]}
+          position={[7.7, 4.3, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <CuboidCollider
+          args={[7.3, 4, 0.3]}
+          position={[-7.7, 4.3, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+
+        {/* TOP */}
+        <CuboidCollider
+          args={[7.3, 0.2, 7.3]}
+          position={[0, 8.6, 0]}
+        />
       </RigidBody>
 
       {/* GROUND */}
