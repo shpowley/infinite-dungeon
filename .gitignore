@@ -1,0 +1,8 @@
+## DIRECTORIES
+dist
+node_modules
+
+## FILES
+package-lock.json
+NOTES.txt
+README.md
