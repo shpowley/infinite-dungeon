@@ -1,6 +1,7 @@
 ## DIRECTORIES
 dist
 node_modules
+blender
 
 ## FILES
 package-lock.json

@@ -1,50 +1,297 @@
+import { useRef, useState } from 'react'
 import * as THREE from 'three'
-import { OrbitControls } from '@react-three/drei'
-import { Perf } from 'r3f-perf'
-import { CuboidCollider, Physics, RigidBody, quat, vec3 } from '@react-three/rapier'
-import { useEffect, useRef, useState } from 'react'
-import { Vector3 } from 'three'
+import { useThree } from '@react-three/fiber'
+import { OrbitControls, useHelper } from '@react-three/drei'
+import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier'
+import { folder, useControls } from "leva"
+
+import { CAMERA_DEFAULTS } from './common/Constants'
+import { parameterEnabled, randomFloat } from './common/Utils'
 import D20, { FACE_ID_LOOKUP } from './components/D20'
 
+// DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
+let Perf = null
+
+if (parameterEnabled('PERF') || parameterEnabled('perf')) {
+  Perf = (await import('r3f-perf')).Perf
+}
 
 const Experience = () => {
   const
+    ref_light = useRef(),
+    ref_camera = useRef(),
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
 
   const [dice_sound] = useState({
     is_playing: false,
-    media: new Audio('/sounds/hit.mp3'),
+    media: new Audio('./sounds/hit.mp3'),
   })
 
-  let d20_start = {
-    pos: 0,
-    quatertion: 0,
-  }
+  /**
+   * DEBUG CONTROLS
+   */
 
-  const randomFloat = (min, max) => Math.random() * (max - min) + min
+  // CAMERA DEBUG CONTROLS
+  const camera = useThree(state => state.camera)
+
+  useControls(
+    'camera',
+
+    {
+      fov: {
+        value: CAMERA_DEFAULTS.fov,
+        min: 0,
+        max: 180,
+        step: 1,
+
+        onChange: value => {
+          camera.fov = value
+          camera.updateProjectionMatrix()
+        }
+      },
+
+      near: {
+        value: CAMERA_DEFAULTS.near,
+        min: 0,
+        max: 10,
+        step: 0.1,
+
+        onChange: value => {
+          camera.near = value
+          camera.updateProjectionMatrix()
+        }
+      },
+
+      far: {
+        value: CAMERA_DEFAULTS.far,
+        min: 0,
+        max: 1000,
+        step: 1,
+
+        onChange: value => {
+          camera.far = value
+          camera.updateProjectionMatrix()
+        }
+      },
+
+      position: {
+        value: CAMERA_DEFAULTS.position,
+        step: 0.1,
+
+        onChange: value => {
+          camera.position.set(...value)
+          camera.lookAt(0, 0, 0)
+        }
+      },
+    },
+
+    { collapsed: true }
+  )
+
+  // LIGHTING DEBUG
+  const controls_lighting = useControls(
+    'lighting',
+
+    {
+      'ambient light': folder(
+        {
+          ambient_intensity: {
+            label: 'intensity',
+            value: 0.5,
+            min: 0,
+            max: 10,
+            step: 0.1,
+          },
+
+          ambient_color: {
+            label: 'color',
+            value: '#ffffff',
+          },
+        },
+
+        { collapsed: true }
+      ),
+
+      // subfolder
+      'directional light': folder(
+        {
+          directional_intensity: {
+            label: 'intensity',
+            value: 1.5,
+            min: 0,
+            max: 10,
+            step: 0.1,
+          },
+
+          directional_position: {
+            label: 'position',
+            value: [5, 8, 5],
+            step: 0.1,
+          },
+
+          directional_color: {
+            label: 'color',
+            value: '#ffffff',
+          },
+        },
+
+        { collapsed: true }
+      ),
+
+      // subfolder
+      'shadow': folder(
+        {
+          shadow_enabled: {
+            label: 'enabled',
+            value: true,
+          },
+
+          shadow_helper: {
+            label: 'helper',
+            value: false,
+          },
+
+          shadow_near: {
+            label: 'near',
+            value: 1.5,
+            min: 0,
+            max: 10,
+            step: 0.01,
+
+            onChange: value => {
+              ref_camera.current.near = value
+              ref_camera.current.updateProjectionMatrix()
+            }
+          },
+
+          shadow_far: {
+            label: 'far',
+            value: 18,
+            min: 10,
+            max: 200,
+            step: 1,
+
+            onChange: value => {
+              ref_camera.current.far = value
+              ref_camera.current.updateProjectionMatrix()
+            }
+          },
+
+          shadow_left: {
+            label: 'left',
+            value: 12,
+            min: 1,
+            max: 50,
+            step: 1,
+
+            onChange: value => {
+              ref_camera.current.left = -value
+              ref_camera.current.updateProjectionMatrix()
+            }
+          },
+
+          shadow_right: {
+            label: 'right',
+            value: 12,
+            min: 1,
+            max: 50,
+            step: 1,
+
+            onChange: value => {
+              ref_camera.current.right = value
+              ref_camera.current.updateProjectionMatrix()
+            }
+          },
+
+          shadow_top: {
+            label: 'top',
+            value: 9,
+            min: 1,
+            max: 50,
+            step: 1,
+
+            onChange: value => {
+              ref_camera.current.top = value
+              ref_camera.current.updateProjectionMatrix()
+            }
+          },
+
+          shadow_bottom: {
+            label: 'bottom',
+            value: 8,
+            min: 1,
+            max: 50,
+            step: 1,
+
+            onChange: value => {
+              ref_camera.current.bottom = -value
+              ref_camera.current.updateProjectionMatrix()
+            }
+          },
+        },
+
+        { collapsed: true }
+      ),
+    },
+
+    { collapsed: true }
+  )
+
+  // PHYSICS DEBUG
+  const controls_physics = useControls(
+    'physics',
+
+    {
+      debug: {
+        value: false,
+      }
+    },
+
+    { collapsed: true }
+  )
+
+
+  /**
+   * HELPERS
+   */
+  // useHelper(
+  //   controls_lighting.helper && ref_light,
+  //   THREE.DirectionalLightHelper, 1, 'hotpink'
+  // )
+
+  useHelper(
+    controls_lighting.shadow_helper && ref_camera,
+    THREE.CameraHelper
+  )
+
+
+
+  /**
+   * DICE ROLLING
+   */
 
   const rollD20 = () => {
     if (!ref_d20_body.current) return
 
     // randomize the roll position
-    const roll_start_pos = new Vector3(
+    const roll_start_pos = new THREE.Vector3(
       randomFloat(-5, 5), // roll left/right position
-      6, // roll height
+      2, // roll height
       6 // how far back to roll
     )
 
     // reset the d20
     ref_d20_body.current.setTranslation(roll_start_pos, true)
-    ref_d20_body.current.setRotation(d20_start.quatertion, true)
+    ref_d20_body.current.setRotation({ x: 0, y: 0, z: 0, w: 0 }, true)
     ref_d20_body.current.setAngvel({ x: 0, y: 0, z: 0 })
     ref_d20_body.current.setLinvel({ x: 0, y: 0, z: 0 })
 
     // apply a random force and spin
     ref_d20_body.current.applyImpulse({
-      x: randomFloat(-100, 100), // left/right force
-      y: randomFloat(-70, 10), // upward force
-      z: randomFloat(-150, -80) // forward force
+      x: randomFloat(-30, 30), // left/right force
+      y: randomFloat(20, 40), // upward force
+      z: randomFloat(-80, -30) // forward force
     }, true)
 
     ref_d20_body.current.applyTorqueImpulse({
@@ -57,9 +304,12 @@ const Experience = () => {
   // get the face of the d20 that is facing up
   const onRollComplete = () => {
     const d20_position = ref_d20_mesh.current.getWorldPosition(new THREE.Vector3())
-
     const raycaster = new THREE.Raycaster()
-    raycaster.set(new THREE.Vector3(d20_position.x, d20_position.y + 1, d20_position.z), new THREE.Vector3(0, -1, 0))
+
+    raycaster.set(
+      new THREE.Vector3(d20_position.x, d20_position.y + 1, d20_position.z), // start position above the d20
+      new THREE.Vector3(0, -1, 0) // direction down
+    )
 
     const intersect = raycaster.intersectObject(ref_d20_mesh.current, true)
 
@@ -81,30 +331,61 @@ const Experience = () => {
     }
   }
 
+  // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
   // save the initial position and rotation of the d20
-  useEffect(() => {
-    if (ref_d20_body.current) {
-      d20_start.pos = vec3(ref_d20_body.current.translation())
-      d20_start.quatertion = quat(ref_d20_body.current.rotation())
-    }
-  }, [])
+  // useEffect(() => {
+  //   if (ref_d20_body.current) {
+  //     d20_start.pos = vec3(ref_d20_body.current.translation())
+  //     d20_start.quatertion = quat(ref_d20_body.current.rotation())
+  //   }
+  // }, [])
 
   return <>
 
-    <Perf position='top-left' />
+    {Perf && <Perf position='top-left' />}
 
     <OrbitControls makeDefault />
 
-    <directionalLight castShadow position={[1, 2, 3]} intensity={4.5} />
-    <ambientLight intensity={1.5} />
+    <directionalLight
+      ref={ref_light}
+      castShadow={controls_lighting.shadow_enabled}
+      position={controls_lighting.directional_position}
+      intensity={controls_lighting.directional_intensity}
+      color={controls_lighting.directional_color}
+      shadow-mapSize={[1024, 1024]}
+      shadow-radius={4}
+    >
+      <orthographicCamera
+        ref={ref_camera}
+        attach='shadow-camera'
+        near={controls_lighting.shadow_near}
+        far={controls_lighting.shadow_far}
 
-    <Physics debug={false} >
+        args={[
+          controls_lighting.shadow_left,
+          controls_lighting.shadow_right,
+          controls_lighting.shadow_top,
+          controls_lighting.shadow_bottom,
+        ]}
+      />
+    </directionalLight>
+
+    <ambientLight
+      intensity={controls_lighting.ambient_intensity}
+      color={controls_lighting.ambient_color}
+    />
+
+    <Physics
+      debug={controls_physics.debug}
+      gravity={[0, -9.81, 0]}
+    >
 
       {/* D20 */}
       <RigidBody
         ref={ref_d20_body}
         colliders='hull'
-        position={[0, 8, 0]}
+        position={[0, 8, 6]}
+        rotation={[Math.random(), 0, Math.random()]}
         onClick={rollD20}
         onSleep={onRollComplete}
         onContactForce={(payload) => { handleDiceSound(payload.totalForceMagnitude) }}
@@ -124,7 +405,7 @@ const Experience = () => {
       <RigidBody
         type='fixed'
         restitution={0.1}
-        friction={0.3}
+        friction={0}
       >
         <CuboidCollider
           args={[7.3, 4, 0.3]}
