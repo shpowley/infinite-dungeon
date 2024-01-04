@@ -1,13 +1,16 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, useHelper } from '@react-three/drei'
-import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier'
+import { Physics, RigidBody } from '@react-three/rapier'
 import { folder, useControls } from "leva"
 
 import { CAMERA_DEFAULTS } from './common/Constants'
 import { parameterEnabled, randomFloat } from './common/Utils'
 import D20, { FACE_ID_LOOKUP } from './components/D20'
+import Wall, { ROOM_COLLIDER } from './components/Wall'
+import Ceiling from './components/Ceiling'
+import Floor from './components/Floor'
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
 let Perf = null
@@ -18,6 +21,7 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
 
 const Experience = () => {
   const
+    ref_controls = useRef(),
     ref_light = useRef(),
     ref_camera = useRef(),
     ref_d20_body = useRef(),
@@ -81,7 +85,7 @@ const Experience = () => {
 
         onChange: value => {
           camera.position.set(...value)
-          camera.lookAt(0, 0, 0)
+          ref_controls.current.update()
         }
       },
     },
@@ -126,7 +130,7 @@ const Experience = () => {
 
           directional_position: {
             label: 'position',
-            value: [5, 8, 5],
+            value: [5, 12, 5],
             step: 0.1,
           },
 
@@ -167,7 +171,7 @@ const Experience = () => {
 
           shadow_far: {
             label: 'far',
-            value: 18,
+            value: 19,
             min: 10,
             max: 200,
             step: 1,
@@ -206,7 +210,7 @@ const Experience = () => {
 
           shadow_top: {
             label: 'top',
-            value: 9,
+            value: 12,
             min: 1,
             max: 50,
             step: 1,
@@ -255,10 +259,6 @@ const Experience = () => {
   /**
    * HELPERS
    */
-  // useHelper(
-  //   controls_lighting.helper && ref_light,
-  //   THREE.DirectionalLightHelper, 1, 'hotpink'
-  // )
 
   useHelper(
     controls_lighting.shadow_helper && ref_camera,
@@ -340,11 +340,19 @@ const Experience = () => {
   //   }
   // }, [])
 
+  useEffect(() => {
+    ref_controls.current.target.set(0, 2, 0)
+    ref_controls.current.update()
+  }, [])
+
   return <>
 
     {Perf && <Perf position='top-left' />}
 
-    <OrbitControls makeDefault />
+    <OrbitControls
+      ref={ref_controls}
+      makeDefault
+    />
 
     <directionalLight
       ref={ref_light}
@@ -384,69 +392,48 @@ const Experience = () => {
       <RigidBody
         ref={ref_d20_body}
         colliders='hull'
-        position={[0, 8, 6]}
+        position={[0, 6, 6]}
         rotation={[Math.random(), 0, Math.random()]}
+        mass={1}
+        restitution={0.4}
+        friction={0.3}
+
         onClick={rollD20}
         onSleep={onRollComplete}
         onContactForce={(payload) => { handleDiceSound(payload.totalForceMagnitude) }}
-        mass={1}
-        restitution={0.2}
-        friction={0.3}
       >
         <D20
           child_ref={ref_d20_mesh}
           castShadow
         // onClick={testFace}
         />
-
       </RigidBody>
 
-      {/* WALLS + TOP */}
-      <RigidBody
-        type='fixed'
-        restitution={0.1}
-        friction={0}
-      >
-        <CuboidCollider
-          args={[7.3, 4, 0.3]}
-          position={[0, 4.3, -7.7]}
-        />
-        <CuboidCollider
-          args={[7.3, 4, 0.3]}
-          position={[0, 4.3, 7.7]}
-        />
-        <CuboidCollider
-          args={[7.3, 4, 0.3]}
-          position={[7.7, 4.3, 0]}
-          rotation={[0, Math.PI / 2, 0]}
-        />
-        <CuboidCollider
-          args={[7.3, 4, 0.3]}
-          position={[-7.7, 4.3, 0]}
-          rotation={[0, Math.PI / 2, 0]}
-        />
+      {/* ROOM */}
+      <Wall
+        position={[0, ROOM_COLLIDER.wall_position_y, -7.3]}
+      />
 
-        {/* TOP */}
-        <CuboidCollider
-          args={[7.3, 0.2, 7.3]}
-          position={[0, 8.6, 0]}
-        />
-      </RigidBody>
+      <Wall
+        position={[0, ROOM_COLLIDER.wall_position_y, 7.3]}
+        rotation={[0, Math.PI, 0]}
+      />
 
-      {/* GROUND */}
-      <RigidBody
-        type='fixed'
-        restitution={0.1}
-        friction={0.3}
-      >
-        <mesh receiveShadow position-y={0} visible={true}>
-          <boxGeometry args={[16, 0.5, 16]} />
-          <meshStandardMaterial color='greenyellow' />
-        </mesh>
-      </RigidBody>
+      <Wall
+        position={[7.3, ROOM_COLLIDER.wall_position_y, 0]}
+        rotation={[0, -Math.PI * 0.5, 0]}
+      />
+
+      <Wall
+        position={[-7.3, ROOM_COLLIDER.wall_position_y, 0]}
+        rotation={[0, Math.PI * 0.5, 0]}
+      />
+
+      <Ceiling />
+
+      <Floor />
 
     </Physics>
-
   </>
 }
 

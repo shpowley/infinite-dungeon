@@ -59,7 +59,7 @@ const App = () => {
         fov: CAMERA_DEFAULTS.fov,
         near: CAMERA_DEFAULTS.near,
         far: CAMERA_DEFAULTS.far,
-        position: CAMERA_DEFAULTS.position,
+        position: CAMERA_DEFAULTS.position
       }}
     >
       <Experience />

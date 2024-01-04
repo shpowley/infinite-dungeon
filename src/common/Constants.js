@@ -10,9 +10,9 @@ const TONE_MAPPING_OPTIONS = {
 
 const CAMERA_DEFAULTS = {
   fov: 45,
-  near: 0.1,
-  far: 200,
-  position: [0, 10, 16],
+  near: 0.5,
+  far: 60,
+  position: [0, 10, 16.5],
 }
 
 export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS }
