@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, useHelper } from '@react-three/drei'
-import { Physics, RigidBody } from '@react-three/rapier'
+import { Physics } from '@react-three/rapier'
 import { folder, useControls } from "leva"
 
 import { CAMERA_DEFAULTS } from './common/Constants'
-import { parameterEnabled, randomFloat } from './common/Utils'
-import D20, { FACE_ID_LOOKUP } from './components/D20'
+import { parameterEnabled } from './common/Utils'
+import D20 from './components/D20'
 import Wall, { ROOM_COLLIDER } from './components/Wall'
 import Ceiling from './components/Ceiling'
 import Floor from './components/Floor'
@@ -23,14 +23,7 @@ const Experience = () => {
   const
     ref_controls = useRef(),
     ref_light = useRef(),
-    ref_camera = useRef(),
-    ref_d20_body = useRef(),
-    ref_d20_mesh = useRef()
-
-  const [dice_sound] = useState({
-    is_playing: false,
-    media: new Audio('./sounds/hit.mp3'),
-  })
+    ref_camera = useRef()
 
   /**
    * DEBUG CONTROLS
@@ -266,71 +259,6 @@ const Experience = () => {
   )
 
 
-
-  /**
-   * DICE ROLLING
-   */
-
-  const rollD20 = () => {
-    if (!ref_d20_body.current) return
-
-    // randomize the roll position
-    const roll_start_pos = new THREE.Vector3(
-      randomFloat(-5, 5), // roll left/right position
-      2, // roll height
-      6 // how far back to roll
-    )
-
-    // reset the d20
-    ref_d20_body.current.setTranslation(roll_start_pos, true)
-    ref_d20_body.current.setRotation({ x: 0, y: 0, z: 0, w: 0 }, true)
-    ref_d20_body.current.setAngvel({ x: 0, y: 0, z: 0 })
-    ref_d20_body.current.setLinvel({ x: 0, y: 0, z: 0 })
-
-    // apply a random force and spin
-    ref_d20_body.current.applyImpulse({
-      x: randomFloat(-30, 30), // left/right force
-      y: randomFloat(20, 40), // upward force
-      z: randomFloat(-80, -30) // forward force
-    }, true)
-
-    ref_d20_body.current.applyTorqueImpulse({
-      x: randomFloat(-20, -5), // forward spin
-      y: 0,
-      z: randomFloat(-12, 12) // left/right spin
-    }, true)
-  }
-
-  // get the face of the d20 that is facing up
-  const onRollComplete = () => {
-    const d20_position = ref_d20_mesh.current.getWorldPosition(new THREE.Vector3())
-    const raycaster = new THREE.Raycaster()
-
-    raycaster.set(
-      new THREE.Vector3(d20_position.x, d20_position.y + 1, d20_position.z), // start position above the d20
-      new THREE.Vector3(0, -1, 0) // direction down
-    )
-
-    const intersect = raycaster.intersectObject(ref_d20_mesh.current, true)
-
-    console.log('YOU ROLLED A: ', FACE_ID_LOOKUP[intersect[0].faceIndex])
-  }
-
-  dice_sound.media.onended = () => {
-    dice_sound.is_playing = false
-  }
-
-  const handleDiceSound = (force) => {
-    if (force > 100 && !dice_sound.is_playing) {
-      dice_sound.media.currentTime = 0
-      dice_sound.media.volume = Math.min(force / 2000, 1)
-
-      dice_sound.media.play()
-        .then(() => dice_sound.is_playing = true)
-        .catch(err => dice_sound.is_playing = false)
-    }
-  }
-
   // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
   // save the initial position and rotation of the d20
   // useEffect(() => {
@@ -388,28 +316,12 @@ const Experience = () => {
       gravity={[0, -9.81, 0]}
     >
 
-      {/* D20 */}
-      <RigidBody
-        ref={ref_d20_body}
-        colliders='hull'
+      <D20
+        shadow
         position={[0, 6, 6]}
-        rotation={[Math.random(), 0, Math.random()]}
-        mass={1}
-        restitution={0.4}
-        friction={0.3}
+        scale={[0.5, 0.5, 0.5]}
+      />
 
-        onClick={rollD20}
-        onSleep={onRollComplete}
-        onContactForce={(payload) => { handleDiceSound(payload.totalForceMagnitude) }}
-      >
-        <D20
-          child_ref={ref_d20_mesh}
-          castShadow
-        // onClick={testFace}
-        />
-      </RigidBody>
-
-      {/* ROOM */}
       <Wall
         position={[0, ROOM_COLLIDER.wall_position_y, -7.3]}
       />
