@@ -8,9 +8,7 @@ import { folder, useControls } from "leva"
 import { CAMERA_DEFAULTS } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
-import Wall, { ROOM_COLLIDER } from './components/Wall'
-import Ceiling from './components/Ceiling'
-import Floor from './components/Floor'
+import Room from './components/Room'
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
 let Perf = null
@@ -317,33 +315,11 @@ const Experience = () => {
     >
 
       <D20
-        shadow
+        castShadow
         position={[0, 6, 6]}
-        scale={[0.5, 0.5, 0.5]}
       />
 
-      <Wall
-        position={[0, ROOM_COLLIDER.wall_position_y, -7.3]}
-      />
-
-      <Wall
-        position={[0, ROOM_COLLIDER.wall_position_y, 7.3]}
-        rotation={[0, Math.PI, 0]}
-      />
-
-      <Wall
-        position={[7.3, ROOM_COLLIDER.wall_position_y, 0]}
-        rotation={[0, -Math.PI * 0.5, 0]}
-      />
-
-      <Wall
-        position={[-7.3, ROOM_COLLIDER.wall_position_y, 0]}
-        rotation={[0, Math.PI * 0.5, 0]}
-      />
-
-      <Ceiling />
-
-      <Floor />
+      <Room receiveShadow />
 
     </Physics>
   </>
