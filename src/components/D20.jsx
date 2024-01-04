@@ -70,32 +70,39 @@ const D20 = ({ castShadow = true, position }) => {
   const rollD20 = () => {
     if (!ref_d20_body.current) return
 
-    // randomize the roll position
-    const roll_start_pos = new THREE.Vector3(
-      randomFloat(-5, 5), // roll left/right position
-      2, // roll height
-      6 // how far back to roll
-    )
 
-    // reset the d20
-    ref_d20_body.current.setTranslation(roll_start_pos, true)
-    ref_d20_body.current.setRotation({ x: 0, y: 0, z: 0, w: 0 }, true)
+
+    // COMMENT: REMOVED, BUT KEEPING AS REFERENCE CODE IF I NEED TO RESET THE ACTUAL POSITION / ROTATION
+    // // randomize the roll position
+    // const roll_start_pos = new THREE.Vector3(
+    //   randomFloat(-5, 5), // roll left/right position
+    //   2, // roll height
+    //   6 // how far back to roll
+    // )
+
+    // // reset the d20 position and rotation
+    // ref_d20_body.current.setTranslation(roll_start_pos, true)
+    // ref_d20_body.current.setRotation({ x: 0, y: 0, z: 0, w: 0 }, true)
+
+
+
+    const scaling = 1.0
+
+    // reset the d20 prior to rolling
     ref_d20_body.current.setAngvel({ x: 0, y: 0, z: 0 })
     ref_d20_body.current.setLinvel({ x: 0, y: 0, z: 0 })
 
-    const scaling = 0.8
-
     // apply a random force and spin
     ref_d20_body.current.applyImpulse({
-      x: scaling * randomFloat(-30, 30), // left/right force
-      y: scaling * randomFloat(30, 35), // upward force
-      z: scaling * randomFloat(-80, -30) // forward force
+      x: scaling * randomFloat(-80, 80), // left/right force
+      y: scaling * randomFloat(30, 40), // upward force
+      z: scaling * randomFloat(-80, 80) // forward force
     }, true)
 
     ref_d20_body.current.applyTorqueImpulse({
-      x: randomFloat(-20, -5), // forward spin
+      x: randomFloat(-20, -10), // forward spin
       y: 0,
-      z: randomFloat(-12, 12) // left/right spin
+      z: randomFloat(-10, 10) // left/right spin
     }, true)
   }
 
@@ -120,7 +127,7 @@ const D20 = ({ castShadow = true, position }) => {
       colliders='hull'
       position={position}
       rotation={[Math.random(), 0, Math.random()]}
-      mass={10}
+      mass={1}
       restitution={0.4}
       friction={0.3}
 

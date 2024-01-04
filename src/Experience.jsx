@@ -313,7 +313,6 @@ const Experience = () => {
       debug={controls_physics.debug}
       gravity={[0, -9.81, 0]}
     >
-
       <D20
         castShadow
         position={[0, 6, 6]}

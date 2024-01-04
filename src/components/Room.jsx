@@ -95,26 +95,28 @@ const Ceiling = () => {
   </RigidBody>
 }
 
-const Room = ({receiveShadow = false}) => {
+const Room = ({ receiveShadow = false }) => {
   receive_shadow = receiveShadow
+
+  const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
 
   return <>
     <Wall
-      position={[0, ROOM_COLLIDER.wall_position_y, -7.3]}
+      position={[0, ROOM_COLLIDER.wall_position_y, -dimension]}
     />
 
     <Wall
-      position={[0, ROOM_COLLIDER.wall_position_y, 7.3]}
+      position={[0, ROOM_COLLIDER.wall_position_y, dimension]}
       rotation={[0, Math.PI, 0]}
     />
 
     <Wall
-      position={[7.3, ROOM_COLLIDER.wall_position_y, 0]}
+      position={[dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, -Math.PI * 0.5, 0]}
     />
 
     <Wall
-      position={[-7.3, ROOM_COLLIDER.wall_position_y, 0]}
+      position={[-dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, Math.PI * 0.5, 0]}
     />
 
