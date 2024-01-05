@@ -1,11 +1,14 @@
+import { useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { CuboidCollider, RigidBody } from "@react-three/rapier"
+
+import Door from './Door'
 
 const THICKNESS_EXTENT = 0.3
 
 const ROOM_EXTENTS = {
   width: 7,
-  height: 4
+  height: 3
 }
 
 const ROOM_COLLIDER = {
@@ -33,7 +36,7 @@ const
   material_wall = new THREE.MeshStandardMaterial({ color: '#dbd7d2' }),
   material_floor = new THREE.MeshStandardMaterial({ color: '#dbd7d2' })
 
-let receive_shadow = false
+let room_receive_shadow = false
 
 const Wall = (props) => {
   return <RigidBody
@@ -47,8 +50,12 @@ const Wall = (props) => {
       position={props.position}
       rotation={props.rotation}
     >
+      <Door
+        position={[0, -ROOM_EXTENTS.height, 0.35]}
+        scale={[1.2, 1.2, 1.2]}
+      />
       <mesh
-        receiveShadow={receive_shadow}
+        receiveShadow={room_receive_shadow}
         position={[0, 0, THICKNESS_EXTENT]}
         geometry={geometry_plane_wall}
         material={material_wall}
@@ -71,7 +78,7 @@ const Floor = () => {
       friction={0.3}
     >
       <mesh
-        receiveShadow={receive_shadow}
+        receiveShadow={room_receive_shadow}
         position={[0, THICKNESS_EXTENT, 0]}
         rotation={[-Math.PI * 0.5, 0, 0]}
         geometry={geometry_plane_floor}
@@ -95,10 +102,43 @@ const Ceiling = () => {
   </RigidBody>
 }
 
-const Room = ({ receiveShadow = false }) => {
-  receive_shadow = receiveShadow
+const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
+  const [camera_angle, setCameraAngle] = useState(0)
+
+  let camera = null
 
   const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
+
+  room_receive_shadow = receiveShadow
+
+  // calculate the camera's angle in degrees (-180 to 0 to 180) based on the camera's position
+  const calculateCameraAngle = () => {
+    if (camera) {
+      const new_camera_angle = THREE.MathUtils.radToDeg(
+        Math.atan2(
+          camera.position.x,
+          camera.position.z
+        )
+      )
+
+      setCameraAngle(new_camera_angle)
+    }
+  }
+
+  useEffect(() => {
+    camera = ref_orbit_controls.current?.object
+
+    // COMMENT:
+    // - note that the camera angle calculation is done here in the room component vs. in the experience component
+    //   this is because doing so in the experience component requires storing the camera angle in a state variable
+    //   and then passing that state variable to the room component
+    //   -- THIS CAUSES A LOT OF UNNECESSARY RE-RENDERS ..ON THE D20 SPECIFICALLY
+    ref_orbit_controls.current.addEventListener('change', calculateCameraAngle)
+
+    return () => {
+      ref_orbit_controls.current.removeEventListener('change', calculateCameraAngle)
+    }
+  }, [ref_orbit_controls])
 
   return <>
     <Wall

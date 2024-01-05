@@ -19,9 +19,9 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
 
 const Experience = () => {
   const
-    ref_controls = useRef(),
+    ref_orbit_controls = useRef(),
     ref_light = useRef(),
-    ref_camera = useRef()
+    ref_shadow_camera = useRef()
 
   /**
    * DEBUG CONTROLS
@@ -76,7 +76,7 @@ const Experience = () => {
 
         onChange: value => {
           camera.position.set(...value)
-          ref_controls.current.update()
+          ref_orbit_controls.current.update()
         }
       },
     },
@@ -155,8 +155,8 @@ const Experience = () => {
             step: 0.01,
 
             onChange: value => {
-              ref_camera.current.near = value
-              ref_camera.current.updateProjectionMatrix()
+              ref_shadow_camera.current.near = value
+              ref_shadow_camera.current.updateProjectionMatrix()
             }
           },
 
@@ -168,8 +168,8 @@ const Experience = () => {
             step: 1,
 
             onChange: value => {
-              ref_camera.current.far = value
-              ref_camera.current.updateProjectionMatrix()
+              ref_shadow_camera.current.far = value
+              ref_shadow_camera.current.updateProjectionMatrix()
             }
           },
 
@@ -181,8 +181,8 @@ const Experience = () => {
             step: 1,
 
             onChange: value => {
-              ref_camera.current.left = -value
-              ref_camera.current.updateProjectionMatrix()
+              ref_shadow_camera.current.left = -value
+              ref_shadow_camera.current.updateProjectionMatrix()
             }
           },
 
@@ -194,8 +194,8 @@ const Experience = () => {
             step: 1,
 
             onChange: value => {
-              ref_camera.current.right = value
-              ref_camera.current.updateProjectionMatrix()
+              ref_shadow_camera.current.right = value
+              ref_shadow_camera.current.updateProjectionMatrix()
             }
           },
 
@@ -207,8 +207,8 @@ const Experience = () => {
             step: 1,
 
             onChange: value => {
-              ref_camera.current.top = value
-              ref_camera.current.updateProjectionMatrix()
+              ref_shadow_camera.current.top = value
+              ref_shadow_camera.current.updateProjectionMatrix()
             }
           },
 
@@ -220,8 +220,8 @@ const Experience = () => {
             step: 1,
 
             onChange: value => {
-              ref_camera.current.bottom = -value
-              ref_camera.current.updateProjectionMatrix()
+              ref_shadow_camera.current.bottom = -value
+              ref_shadow_camera.current.updateProjectionMatrix()
             }
           },
         },
@@ -252,7 +252,7 @@ const Experience = () => {
    */
 
   useHelper(
-    controls_lighting.shadow_helper && ref_camera,
+    controls_lighting.shadow_helper && ref_shadow_camera,
     THREE.CameraHelper
   )
 
@@ -267,8 +267,8 @@ const Experience = () => {
   // }, [])
 
   useEffect(() => {
-    ref_controls.current.target.set(0, 2, 0)
-    ref_controls.current.update()
+    ref_orbit_controls.current.target.set(0, 2, 0)
+    ref_orbit_controls.current.update()
   }, [])
 
   return <>
@@ -276,7 +276,7 @@ const Experience = () => {
     {Perf && <Perf position='top-left' />}
 
     <OrbitControls
-      ref={ref_controls}
+      ref={ref_orbit_controls}
       makeDefault
     />
 
@@ -290,7 +290,7 @@ const Experience = () => {
       shadow-radius={4}
     >
       <orthographicCamera
-        ref={ref_camera}
+        ref={ref_shadow_camera}
         attach='shadow-camera'
         near={controls_lighting.shadow_near}
         far={controls_lighting.shadow_far}
@@ -318,7 +318,10 @@ const Experience = () => {
         position={[0, 6, 6]}
       />
 
-      <Room receiveShadow />
+      <Room
+        receiveShadow
+        ref_orbit_controls={ref_orbit_controls}
+      />
 
     </Physics>
   </>
