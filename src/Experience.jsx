@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, useHelper } from '@react-three/drei'
@@ -9,6 +9,7 @@ import { CAMERA_DEFAULTS } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room from './components/Room'
+import Warrior from './components/Warrior'
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
 let Perf = null
@@ -162,7 +163,7 @@ const Experience = () => {
 
           shadow_far: {
             label: 'far',
-            value: 19,
+            value: 20,
             min: 10,
             max: 200,
             step: 1,
@@ -214,7 +215,7 @@ const Experience = () => {
 
           shadow_bottom: {
             label: 'bottom',
-            value: 8,
+            value: 10,
             min: 1,
             max: 50,
             step: 1,
@@ -266,10 +267,11 @@ const Experience = () => {
   //   }
   // }, [])
 
-  useEffect(() => {
-    ref_orbit_controls.current.target.set(0, 2, 0)
-    ref_orbit_controls.current.update()
-  }, [])
+  // COMMENT: IF NECESSARY, SET STARTING CAMERA TARGET POSITION HERE
+  // useEffect(() => {
+  //   ref_orbit_controls.current.target.set(0, 0, 0)
+  //   ref_orbit_controls.current.update()
+  // }, [])
 
   return <>
 
@@ -313,6 +315,12 @@ const Experience = () => {
       debug={controls_physics.debug}
       gravity={[0, -9.81, 0]}
     >
+      <Warrior
+        castShadow
+        position={[3, 0.8, 3]}
+        rotation={[0, -Math.PI * 0.75, 0]}
+      />
+
       <D20
         castShadow
         position={[0, 6, 6]}
@@ -322,7 +330,6 @@ const Experience = () => {
         receiveShadow
         ref_orbit_controls={ref_orbit_controls}
       />
-
     </Physics>
   </>
 }

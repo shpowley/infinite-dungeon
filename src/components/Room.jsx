@@ -7,8 +7,8 @@ import Door from './Door'
 const THICKNESS_EXTENT = 0.3
 
 const ROOM_EXTENTS = {
-  width: 7,
-  height: 3
+  width: 8,
+  height: 4
 }
 
 const ROOM_COLLIDER = {
@@ -25,7 +25,7 @@ const ROOM_COLLIDER = {
 const
   geometry_plane_wall = new THREE.PlaneGeometry(
     ROOM_COLLIDER.wall_extents[0] * 2,
-    ROOM_COLLIDER.wall_extents[1] * 2
+    ROOM_COLLIDER.wall_extents[1]
   ),
   geometry_plane_floor = new THREE.PlaneGeometry(
     ROOM_COLLIDER.floor_extents[0] * 2,
@@ -34,11 +34,11 @@ const
 
 const
   material_wall = new THREE.MeshStandardMaterial({ color: '#dbd7d2' }),
-  material_floor = new THREE.MeshStandardMaterial({ color: '#dbd7d2' })
+  material_floor = new THREE.MeshStandardMaterial({ color: '#93836c' })
 
 let room_receive_shadow = false
 
-const Wall = (props) => {
+const Wall = ({ position, rotation, visible = true }) => {
   return <RigidBody
     type='kinematicPosition'
     restitution={0.5}
@@ -47,19 +47,21 @@ const Wall = (props) => {
   >
     <CuboidCollider
       args={ROOM_COLLIDER.wall_extents}
-      position={props.position}
-      rotation={props.rotation}
+      position={position}
+      rotation={rotation}
     >
-      <Door
-        position={[0, -ROOM_EXTENTS.height, 0.35]}
-        scale={[1.2, 1.2, 1.2]}
-      />
-      <mesh
-        receiveShadow={room_receive_shadow}
-        position={[0, 0, THICKNESS_EXTENT]}
-        geometry={geometry_plane_wall}
-        material={material_wall}
-      />
+      <group visible={visible}>
+        <Door
+          position={[0, -ROOM_EXTENTS.height, 0.35]}
+          scale={[1.5, 1.5, 1.5]}
+        />
+        <mesh
+          receiveShadow={room_receive_shadow}
+          position={[0, -ROOM_COLLIDER.wall_extents[1] * 0.5, THICKNESS_EXTENT]}
+          geometry={geometry_plane_wall}
+          material={material_wall}
+        />
+      </group>
     </CuboidCollider>
   </RigidBody>
 }
@@ -103,25 +105,50 @@ const Ceiling = () => {
 }
 
 const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
-  const [camera_angle, setCameraAngle] = useState(0)
-
   let camera = null
+
+  const [walls_hidden, setWallsHidden] = useState({
+    SOUTH: true,
+    WEST: false,
+    NORTH: false,
+    EAST: false
+  })
 
   const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
 
   room_receive_shadow = receiveShadow
 
-  // calculate the camera's angle in degrees (-180 to 0 to 180) based on the camera's position
+  // COMMENT: REASON FOR THE CAMERA ANGLE CALCULATION LOGIC
+  // - WALLS ARE AUTOMATICALLY HIDDEN DUE TO BACKFACE CULLING, BUT DOORS ARE NOT
+  // - THIS SAME LOGIC COULD HIDE OTHER MESHES "ATTACHED" TO A WALL (E.G. PAINTINGS, FLAGS, TORCHES, ETC.)
+
+  // calculate the camera's angle in degrees
+  const calculateRange = (prime_angle, camera_yaw) => {
+    let range = 66.5
+
+    const
+      prime_angle_upper = prime_angle === 180 ? -180 : prime_angle,
+      lower_range_test = camera_yaw > prime_angle - range && camera_yaw <= prime_angle,
+      upper_range_test = camera_yaw >= prime_angle_upper && camera_yaw < prime_angle_upper + range
+
+    return lower_range_test || upper_range_test
+  }
+
   const calculateCameraAngle = () => {
     if (camera) {
-      const new_camera_angle = THREE.MathUtils.radToDeg(
-        Math.atan2(
-          camera.position.x,
-          camera.position.z
-        )
+      let angle_radians = Math.atan2(
+        camera.position.x,
+        camera.position.z
       )
 
-      setCameraAngle(new_camera_angle)
+      const camera_yaw = THREE.MathUtils.radToDeg(angle_radians)
+
+      setWallsHidden({
+        SOUTH: calculateRange(0, camera_yaw),
+        EAST: calculateRange(90, camera_yaw),
+        NORTH: calculateRange(180, camera_yaw),
+        WEST: calculateRange(-90, camera_yaw)
+      })
     }
   }
 
@@ -143,21 +170,25 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
   return <>
     <Wall
       position={[0, ROOM_COLLIDER.wall_position_y, -dimension]}
+      visible={!walls_hidden.NORTH}
     />
 
     <Wall
       position={[0, ROOM_COLLIDER.wall_position_y, dimension]}
       rotation={[0, Math.PI, 0]}
+      visible={!walls_hidden.SOUTH}
     />
 
     <Wall
       position={[dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, -Math.PI * 0.5, 0]}
+      visible={!walls_hidden.EAST}
     />
 
     <Wall
       position={[-dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, Math.PI * 0.5, 0]}
+      visible={!walls_hidden.WEST}
     />
 
     <Ceiling />
