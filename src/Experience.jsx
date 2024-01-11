@@ -10,6 +10,7 @@ import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room from './components/Room'
 import Warrior from './components/Warrior'
+import Sign from './components/Sign'
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
 let Perf = null
@@ -317,8 +318,15 @@ const Experience = () => {
     >
       <Warrior
         castShadow
-        position={[3, 0.8, 3]}
+        position={[1.5, 0.8, 1.5]}
         rotation={[0, -Math.PI * 0.75, 0]}
+      />
+
+      <Sign
+        castShadow
+        position={[-1, 0, -1]}
+        scale={[1.4, 1.4, 1.4]}
+        rotation={[0, Math.PI * 0.25, 0]}
       />
 
       <D20

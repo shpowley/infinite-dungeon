@@ -46,10 +46,6 @@ const Warrior = ({ castShadow = false, position, rotation }) => {
     { collapsed: true }
   )
 
-  const handleClick = () => {
-    actions.slash?.play()
-  }
-
   const handleAnimation = (animation) => {
     if (current_animation !== ANIMATION_OPTIONS.NONE) {
       actions[current_animation]?.fadeOut(0.5).stop()
@@ -81,8 +77,6 @@ const Warrior = ({ castShadow = false, position, rotation }) => {
   return <RigidBody
     type='kinematicPosition'
     colliders={false}
-
-    onClick={handleClick}
   >
     <CylinderCollider
       args={[0.8, 0.7]}
