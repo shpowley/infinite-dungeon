@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { useGLTF, useTexture } from '@react-three/drei'
 import { useControls } from 'leva'
 import { MONSTERS } from '../common/Monsters'
+import { CuboidCollider, RigidBody } from '@react-three/rapier'
 
 const FILE_SIGN = './models/sign-compressed.glb'
 
@@ -29,8 +30,6 @@ const getCanvasTexture = (texture, x, y, scale) => {
 const SignMaterial = ({ material, texture_url, x, y, scale }) => {
   let texture, canvas_texture
 
-  console.log('SignMaterial render')
-
   if (texture_url) {
     texture = useTexture(texture_url)
     canvas_texture = getCanvasTexture(texture, x, y, scale)
@@ -47,7 +46,7 @@ const Sign = ({ castShadow = false, position, rotation, scale }) => {
   const { nodes, materials } = useGLTF(FILE_SIGN)
 
   const [controls_image, setControlsImage] = useControls(
-    'paper image',
+    'sign board',
 
     () => ({
       image: {
@@ -93,32 +92,40 @@ const Sign = ({ castShadow = false, position, rotation, scale }) => {
     { collapsed: true }
   )
 
-  console.log(controls_image.image?.path)
-
-  return <group
-    position={position}
-    rotation={rotation}
-    scale={scale}
+  return <RigidBody
+    type='kinematicPosition'
+    colliders={false}
   >
-    <mesh
-      castShadow={castShadow}
-      geometry={nodes.post_1.geometry}
-      material={materials['sign-post']}
-    />
-
-    <mesh
-      castShadow={castShadow}
-      geometry={nodes.post_2.geometry}
+    <CuboidCollider
+      args={[0.95, 2.6, 0.18]}
+      position={position}
+      rotation={rotation}
     >
-      <SignMaterial
-        material={materials['paper-sign']}
-        texture_url={controls_image.image?.path}
-        x={controls_image.pos_x}
-        y={controls_image.pos_y}
-        scale={controls_image.scale}
-      />
-    </mesh>
-  </group>
+      <group
+        position={[0, 0, -0.05]}
+        scale={scale}
+      >
+        <mesh
+          castShadow={castShadow}
+          geometry={nodes.post_1.geometry}
+          material={materials['sign-post']}
+        />
+
+        <mesh
+          castShadow={castShadow}
+          geometry={nodes.post_2.geometry}
+        >
+          <SignMaterial
+            material={materials['paper-sign']}
+            texture_url={controls_image.image?.path}
+            x={controls_image.pos_x}
+            y={controls_image.pos_y}
+            scale={controls_image.scale}
+          />
+        </mesh>
+      </group>
+    </CuboidCollider>
+  </RigidBody>
 }
 
 export default Sign
