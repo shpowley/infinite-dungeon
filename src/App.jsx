@@ -5,8 +5,13 @@ import { Leva, useControls } from "leva"
 import Experience from "./Experience"
 import { parameterEnabled } from "./common/Utils"
 import { CAMERA_DEFAULTS, TONE_MAPPING_OPTIONS } from "./common/Constants"
+import { generateLevel } from "./common/Level"
 
 const debug_enabled = parameterEnabled('DEBUG') || parameterEnabled('debug')
+
+
+let level = null
+
 
 const App = () => {
 
@@ -33,6 +38,24 @@ const App = () => {
 
     { collapsed: true }
   )
+
+
+
+  // TESTING LEVEL GENERATION
+  if (!level) {
+    // DEBUG ROOM
+    const exit_room_debug = {
+      index: 0,
+      level_door: 'W'
+    }
+
+    level = generateLevel(exit_room_debug)
+    console.log(level)
+  }
+
+
+
+
 
   return <>
     <Leva

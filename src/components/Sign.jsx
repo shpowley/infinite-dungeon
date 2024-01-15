@@ -97,12 +97,12 @@ const Sign = ({ castShadow = false, position, rotation, scale }) => {
     colliders={false}
   >
     <CuboidCollider
-      args={[0.95, 2.6, 0.18]}
+      args={[0.95, position[1], 0.18]}
       position={position}
       rotation={rotation}
     >
       <group
-        position={[0, 0, -0.05]}
+        position={[0, -position[1], -0.05]}
         scale={scale}
       >
         <mesh

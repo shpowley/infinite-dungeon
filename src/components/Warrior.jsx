@@ -79,13 +79,13 @@ const Warrior = ({ castShadow = false, position, rotation }) => {
     colliders={false}
   >
     <CylinderCollider
-      args={[0.8, 0.7]}
+      args={[position[1], 0.7]}
       position={position}
       rotation={rotation}
     >
       <group
         ref={ref_warrior}
-        position={[0.2, -0.8, -0.15]}
+        position={[0.2, -position[1], -0.15]}
       >
         <primitive object={nodes._rootJoint} />
         <skinnedMesh
