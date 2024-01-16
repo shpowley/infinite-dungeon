@@ -1,29 +1,190 @@
-// - randomly generated levels 'pseudo-code'
-// - 4x4 grid of blocks as a max constraint
-// - rooms may potentially occupy a block
-// - not all blocks will be occupied
+import { MONSTERS } from "./Monsters"
 
-// - start / end rooms
-//   - require 2 doors (entrance and door to next level)
-//   - doors to next/previous level will be on along the border of the 4x4 grid
-//   - end room leads to next level
-//   - end room will require a key found in another room
-//   - may be adjacent to each other
-//   - end room will have a level boss
+const FLOOR_ITEMS = {
+  HEALTH_POTION: {
+    type: 'potion',
+    name: 'Health Potion',
+    description: 'Restores 10 health points.',
+    value: 10,
+  },
+  TREASURE_CHEST: {
+    type: 'treasure',
+    name: 'Treasure Chest',
+    description: 'What could be inside?',
+    value: 10,
+  }
+}
 
-// - 'other' rooms
-//   - 1-4 doors leading to other rooms
-//   - rooms along the 4x4 grid may not have doors on the border
+const FLOOR_TEMPLATE = {
+  index: null,
+  items: [FLOOR_ITEMS.HEALTH_POTION, FLOOR_ITEMS.TREASURE_CHEST],
+  monsters: [MONSTERS.DEATH_KNIGHT],
+  boss: MONSTERS.DEATH_KNIGHT
+}
 
-// - monsters
-//   - spawned in 'other' rooms only during the initial level generation
-//   - pre-determined number of monsters per level
-//   - pre-determined monster types per level
-//   - pre-determined boss type per level
+const FLOOR_MAX = 30
 
-// - levels and level-state will be saved to local storage
-//   - allows resume game or start new game
+const FLOOR_DATA = new Array(FLOOR_MAX)
+  .fill({ ...FLOOR_TEMPLATE })
+  .map((floor, index) => {
+    const new_floor = { ...floor }
 
+    new_floor.index = index
+
+    switch (index) {
+      case 0:
+        new_floor.monsters = [MONSTERS.BLUE_SLIME]
+        new_floor.boss = MONSTERS.SPIDER
+        break
+
+      case 1:
+        new_floor.items = [FLOOR_ITEMS.HEALTH_POTION]
+        new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.SPIDER]
+        new_floor.boss = MONSTERS.GREEN_SLIME
+        break
+
+      case 2:
+        new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME, MONSTERS.SPIDER]
+        new_floor.boss = MONSTERS.RAT
+        break
+
+      case 3:
+        new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME, MONSTERS.RAT]
+        new_floor.boss = MONSTERS.RAT
+        break
+
+      case 4:
+        new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME]
+        new_floor.boss = MONSTERS.SLIME_SKULL
+        break
+
+      case 5:
+        new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME, MONSTERS.SLIME_SKULL]
+        new_floor.boss = MONSTERS.SLIME_SKULL
+        break
+
+      case 6:
+        new_floor.monsters = [MONSTERS.RAT]
+        new_floor.boss = MONSTERS.GOBLIN
+        break
+
+      case 7:
+        new_floor.monsters = [MONSTERS.RAT, MONSTERS.GOBLIN]
+        new_floor.boss = MONSTERS.GOBLIN
+        break
+
+      case 8:
+        new_floor.monsters = [MONSTERS.RAT, MONSTERS.GOBLIN]
+        new_floor.boss = MONSTERS.KOBOLD
+        break
+
+      case 9:
+        new_floor.monsters = [MONSTERS.KOBOLD, MONSTERS.GOBLIN, MONSTERS.SLIME_SKULL]
+        new_floor.boss = MONSTERS.SKELETON
+        break
+
+      case 10:
+        new_floor.monsters = [MONSTERS.SKELETON, MONSTERS.SLIME_SKULL, MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME]
+        new_floor.boss = MONSTERS.SKELETON
+        break
+
+      case 11:
+        new_floor.monsters = [MONSTERS.SKELETON, MONSTERS.SLIME_SKULL]
+        new_floor.boss = MONSTERS.SLIME_ZOMBIE
+        break
+
+      case 12:
+        new_floor.monsters = [MONSTERS.KOBOLD, MONSTERS.GOBLIN]
+        new_floor.boss = MONSTERS.PYTHON
+        break
+
+      case 13:
+        new_floor.monsters = [MONSTERS.SKELETON, MONSTERS.SLIME_SKULL]
+        new_floor.boss = MONSTERS.SLIME_ZOMBIE
+        break
+
+      case 14:
+        new_floor.monsters = [MONSTERS.RAT]
+        new_floor.boss = MONSTERS.GIANT_RAT
+        break
+
+      case 15:
+        new_floor.monsters = [MONSTERS.KOBOLD, MONSTERS.PYTHON, MONSTERS.TIGER_SPIDER]
+        new_floor.boss = MONSTERS.LIZARDMAN
+        break
+
+      case 16:
+        new_floor.monsters = [MONSTERS.LIZARDMAN, MONSTERS.PYTHON, MONSTERS.TIGER_SPIDER]
+        new_floor.boss = MONSTERS.ORC
+        break
+
+      case 17:
+        new_floor.monsters = [MONSTERS.SLIME_SKULL, MONSTERS.SLIME_ZOMBIE, MONSTERS.SKELETON]
+        new_floor.boss = MONSTERS.SLIME_ZOMBIE
+        break
+
+      case 18:
+        new_floor.monsters = [MONSTERS.SLIME_SKULL, MONSTERS.SLIME_ZOMBIE, MONSTERS.SKELETON]
+        new_floor.boss = MONSTERS.SLIME_ZOMBIE
+        break
+
+      case 19:
+        new_floor.monsters = [MONSTERS.RAT, MONSTERS.GIANT_RAT]
+        new_floor.boss = MONSTERS.WERERAT
+        break
+
+      case 20:
+        new_floor.monsters = [MONSTERS.RAT, MONSTERS.GIANT_RAT, MONSTERS.MIMIC]
+        new_floor.boss = MONSTERS.WERERAT
+        break
+
+      case 21:
+        new_floor.monsters = [MONSTERS.GOBLIN, MONSTERS.KOBOLD, MONSTERS.ORC]
+        new_floor.boss = MONSTERS.HOBGOBLIN
+        break
+
+      case 22:
+        new_floor.monsters = [MONSTERS.GOBLIN, MONSTERS.KOBOLD, MONSTERS.ORC, MONSTERS.HOBGOBLIN]
+        new_floor.boss = MONSTERS.HOBGOBLIN
+        break
+
+      case 23:
+        new_floor.monsters = [MONSTERS.ORC, MONSTERS.HOBGOBLIN]
+        new_floor.boss = MONSTERS.HOBGOBLIN
+        break
+
+      case 24:
+        new_floor.monsters = [MONSTERS.ORC, MONSTERS.HOBGOBLIN, MONSTERS.WERERAT]
+        new_floor.boss = MONSTERS.MINOTAUR
+        break
+
+      case 25:
+        new_floor.monsters = [MONSTERS.SLIME_SKULL, MONSTERS.SLIME_ZOMBIE, MONSTERS.SKELETON]
+        new_floor.boss = MONSTERS.SLIME_ZOMBIE
+        break
+
+      case 26:
+        new_floor.monsters = [MONSTERS.SLIME_SKULL, MONSTERS.SLIME_ZOMBIE, MONSTERS.SKELETON]
+        new_floor.boss = MONSTERS.GRIM_REAPER
+        break
+
+      case 27:
+        new_floor.monsters = [MONSTERS.SLIME_SKULL, MONSTERS.SLIME_ZOMBIE, MONSTERS.SKELETON]
+        new_floor.boss = MONSTERS.GRIM_REAPER
+        break
+
+      case 28:
+        new_floor.monsters = [MONSTERS.MINOTAUR, MONSTERS.MIMIC]
+        new_floor.boss = MONSTERS.GRIM_REAPER
+        break
+
+      case 29:
+        new_floor.monsters = [MONSTERS.GRIM_REAPER, MONSTERS.SKELETON, MONSTERS.SLIME_ZOMBIE]
+        new_floor.boss = MONSTERS.DEATH_KNIGHT
+    }
+
+    return new_floor
+  })
 
 const DIRECTION = {
   N: 'N',
@@ -32,19 +193,13 @@ const DIRECTION = {
   W: 'W'
 }
 
-/**
- * LEVEL BLOCKS
- * 0  1  2  3
- * 4  5  6  7
- * 8  9  10 11
- * 12 13 14 15
- */
 const BLOCK_TEMPLATE = {
   index: null,
   is_room: false,
   adjacent_blocks: null,
 }
 
+// monsters and items added as needed
 const ROOM_TEMPLATE = {
   doors: {
     N: false,
@@ -52,9 +207,6 @@ const ROOM_TEMPLATE = {
     S: false,
     W: false,
   },
-
-  monster: null,
-  item: null,
 }
 
 const PERIMETER_ROOMS = [
@@ -211,40 +363,42 @@ const LEVEL_TEMPLATE = new Array(16)
     return new_block
   })
 
-// BUG - IF BOTH START AND END ROOMS ARE ADJACENT TO EACH OTHER AND HAVE DOORS TO EACH OTHER -- THIS SHOULD NOT BE ALLOWED
-// create a random doors for a room based on adjacent blocks and specified number of doors (don't repeat doors)
-const generateDoors = (block, num_doors = 1) => {
-  const adjacent_blocks = block.adjacent_blocks
-  let door_indices
+let visited_blocks = []
+let next_blocks = []
 
-  // STEP 1 - copy the adjacent array indices [0, 1, 2..] -- not the block index position for the 4x4 level
-  if (num_doors >= adjacent_blocks.length) {
-    door_indices = [...block.adjacent_blocks.keys()]
-  }
-  else {
-    door_indices = []
+const getUnconnectedAdjacentBlocks = (block) => {
+  return [...block.adjacent_blocks]
+    .filter(adjacent_block => !block.doors[adjacent_block.direction] && !visited_blocks.includes(adjacent_block.index))
+}
 
-    while (door_indices.length < num_doors) {
-      const random_index = Math.floor(Math.random() * adjacent_blocks.length)
+// create a random door for a room based on adjacent blocks
+const generateDoor = (block, record_block = true) => {
 
-      if (!door_indices.includes(random_index)) {
-        door_indices.push(random_index)
-      }
-    }
+  // create a list of adjacent blocks that don't already have a door connected to it
+  const unconnected_adjacent_blocks = getUnconnectedAdjacentBlocks(block)
+
+  if (unconnected_adjacent_blocks.length === 0) {
+    return
   }
 
-  // STEP 2 - create doors for the adjacent blocks based on the previous step
-  door_indices.forEach(door_index => {
-    const adjacent_block = adjacent_blocks[door_index]
-    block.doors[adjacent_block.direction] = true
-  })
+  // randomly choose an adjacent block to create a door to it
+  const adjacent_index = unconnected_adjacent_blocks.length > 1
+    ? Math.floor(Math.random() * unconnected_adjacent_blocks.length)
+    : 0
+
+  const adjacent_block = unconnected_adjacent_blocks[adjacent_index]
+  block.doors[adjacent_block.direction] = true
+
+  if (record_block && !visited_blocks.includes(adjacent_block.index)) {
+    next_blocks.push(adjacent_block.index)
+  }
 }
 
 const createStartRoom = (level, index, prior_room) => {
   level[index] = {
     ...level[index],
     ...ROOM_TEMPLATE,
-    doors: {...ROOM_TEMPLATE.doors},
+    doors: { ...ROOM_TEMPLATE.doors },
     is_room: true,
     start_room: true
   }
@@ -256,14 +410,15 @@ const createStartRoom = (level, index, prior_room) => {
   }
 
   // creat a door to a random adjacent block
-  generateDoors(level[index], 1)
+  // generateDoors(level[index], 1)
+  generateDoor(level[index])
 }
 
 const createEndRoom = (level, index) => {
   level[index] = {
     ...level[index],
     ...ROOM_TEMPLATE,
-    doors: {...ROOM_TEMPLATE.doors},
+    doors: { ...ROOM_TEMPLATE.doors },
     is_room: true,
     end_room: true,
     locked: true
@@ -290,10 +445,64 @@ const createEndRoom = (level, index) => {
   }
 
   // creat a door to a random adjacent block
-  generateDoors(level[index], 1)
+  // generateDoors(level[index], 1, false)
+  generateDoor(level[index], false)
 }
 
-const generateLevel = (prior_room) => {
+const createRoom = (level, index) => {
+  if (level[index] && !level[index].is_room) {
+    // determine if there are any adjacent rooms with doors connected to this block
+    // - if so, then
+    //   a) this block must be a room
+    //   b) designated a door to those adjacent rooms
+    const adjacent_blocks_info = level[index].adjacent_blocks
+
+    for (let i = 0; i < adjacent_blocks_info.length; i++) {
+      const block_info = adjacent_blocks_info[i]
+      const adjacent_block = level[block_info.index]
+
+      if (adjacent_block.is_room) {
+
+        const
+          self_info = adjacent_block.adjacent_blocks.find(block => block.index === index),
+          connected_door = adjacent_block.doors[self_info.direction]
+
+        if (connected_door) {
+          // create a room on this block if it's not already a room
+          if (!level[index].is_room) {
+            level[index] = {
+              ...level[index],
+              ...ROOM_TEMPLATE,
+              doors: { ...ROOM_TEMPLATE.doors },
+              is_room: true
+            }
+          }
+
+          // create a door to the adjacent room
+          level[index].doors[block_info.direction] = true
+        }
+      }
+    }
+
+    // if this block is now a room, create additional doors
+    if (level[index].is_room) {
+
+      // add random # of doors
+      const max_unconnected = getUnconnectedAdjacentBlocks(level[index]).length
+      const random_number_of_doors = Math.floor(Math.random() * max_unconnected) + 1
+
+      for (let i = 0; i < random_number_of_doors; i++) {
+        generateDoor(level[index])
+      }
+    }
+  }
+}
+
+const generateLevel = (floor_number, prior_room) => {
+
+  // reset visited blocks and next blocks
+  visited_blocks = []
+  next_blocks = []
 
   // copy the level starter template
   const level = [...LEVEL_TEMPLATE]
@@ -311,49 +520,45 @@ const generateLevel = (prior_room) => {
     end_room_index = PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
   }
 
-  console.log('start_room_index', start_room_index)
-  console.log('end_room_index', end_room_index)
-
   createStartRoom(level, start_room_index, prior_room)
+  visited_blocks.push(start_room_index)
+
   createEndRoom(level, end_room_index)
+  visited_blocks.push(end_room_index)
 
-  // iterate over each block
-  level.forEach((block, index) => {
+  // create rooms
+  while (next_blocks.length > 0) {
+    const block_index = next_blocks.shift()
 
-    if (index !== start_room_index && index !== end_room_index) {
-
-      // determine if there are any adjacent rooms with doors connected to this block
-      // - if so, this block must be a room with a door to that adjacent room
-      const adjacent_blocks_info = level[index].adjacent_blocks
-
-      for (let i = 0; i < adjacent_blocks_info.length; i++) {
-        const block_info = adjacent_blocks_info[i]
-        const adjacent_block = level[block_info.index]
-
-        if (adjacent_block.is_room) {
-
-          const
-            self_info = adjacent_block.adjacent_blocks.find(block => block.index === index),
-            connected_door = adjacent_block.doors[self_info.direction]
-
-          if (connected_door && !block.is_room) {
-            level[index] = {
-              ...level[index],
-              ...ROOM_TEMPLATE,
-              doors: {...ROOM_TEMPLATE.doors},
-              is_room: true
-            }
-
-            // create a door to the adjacent block
-            level[index].doors[block_info.direction] = true
-          }
-        }
-      }
+    if (visited_blocks.includes(block_index)) {
+      continue
     }
-  })
 
-  return level
+    visited_blocks.push(block_index)
+    createRoom(level, block_index)
+  }
+
+  return {
+    room_start: {
+      index: start_room_index,
+      level_door: level[start_room_index]?.level_door
+    },
+
+    room_end: {
+      index: end_room_index,
+      level_door: level[end_room_index]?.level_door
+    },
+
+    floor_number,
+
+    level
+  }
 }
 
+const getFloorData = (floor_number) => {
+  const actual_floor_number = floor_number > FLOOR_MAX ? FLOOR_MAX : floor_number - 1
 
-export { generateLevel }
+  return FLOOR_DATA[actual_floor_number]
+}
+
+export { generateLevel, getFloorData }

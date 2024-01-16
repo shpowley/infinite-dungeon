@@ -325,7 +325,6 @@ const Experience = () => {
       <Sign
         castShadow
         position={[-1, 1.3, -1]}
-        // position={[-1, 0, -1]}
         scale={[1.4, 1.4, 1.4]}
         rotation={[0, Math.PI * 0.25, 0]}
       />

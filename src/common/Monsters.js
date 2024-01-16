@@ -136,7 +136,7 @@ const MONSTERS = {
     x: -80,
     y: 3,
     health: 10,
-    attack: 2,
+    attack: 3,
   },
 
   SKELETON: {
@@ -175,8 +175,8 @@ const MONSTERS = {
     scale: 1.2,
     x: -119,
     y: -24,
-    health: 10,
-    attack: 3,
+    health: 8,
+    attack: 2,
   },
 
   TIGER_SPIDER: {
