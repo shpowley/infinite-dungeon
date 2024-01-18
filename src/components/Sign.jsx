@@ -1,12 +1,19 @@
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useGLTF, useTexture } from '@react-three/drei'
-import { useControls } from 'leva'
-import { MONSTERS } from '../common/Monsters'
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
+import { useSpring, animated } from '@react-spring/three'
+import { button, useControls } from 'leva'
+import { MONSTERS } from '../common/Monsters'
 
 const FILE_SIGN = './models/sign-compressed.glb'
 
 useGLTF.preload(FILE_SIGN)
+
+const DIRECTION = {
+  DOWN: 0,
+  UP: 1
+}
 
 const getCanvasTexture = (texture, x, y, scale) => {
   const larger_dimension = Math.max(texture.image.width, texture.image.height)
@@ -42,13 +49,27 @@ const SignMaterial = ({ material, texture_url, x, y, scale }) => {
   />
 }
 
-const Sign = ({ castShadow = false, position, rotation, scale }) => {
+const Sign = ({ castShadow = false, position, rotation, scale, hidden = true }) => {
+  const
+    ref_sign = useRef(),
+    ref_mesh_group = useRef()
+
   const { nodes, materials } = useGLTF(FILE_SIGN)
+
+  const
+    [is_animating, setAnimation] = useState(false),
+    [animate_direction, setAnimateDirection] = useState(hidden ? DIRECTION.UP : DIRECTION.DOWN)
 
   const [controls_image, setControlsImage] = useControls(
     'sign board',
 
     () => ({
+      'show/hide': button(() => {
+        if (!is_animating) {
+          setAnimation(true)
+        }
+      }),
+
       image: {
         value: 'NONE',
         options: MONSTERS,
@@ -89,43 +110,95 @@ const Sign = ({ castShadow = false, position, rotation, scale }) => {
       },
     }),
 
-    { collapsed: true }
+    { collapsed: true, order: 5 }
   )
 
-  return <RigidBody
-    type='kinematicPosition'
-    colliders={false}
-  >
-    <CuboidCollider
-      args={[0.95, position[1], 0.18]}
-      position={position}
-      rotation={rotation}
-    >
-      <group
-        position={[0, -position[1], -0.05]}
-        scale={scale}
-      >
-        <mesh
-          castShadow={castShadow}
-          geometry={nodes.post_1.geometry}
-          material={materials['sign-post']}
-        />
+  // REACT SPRING - SIGN ANIMATION
+  const [{ react_spring_y }, react_spring_api] = useSpring((
+    () => ({
+      react_spring_y: hidden ? 1 : 0,
+      config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
 
-        <mesh
-          castShadow={castShadow}
-          geometry={nodes.post_2.geometry}
-        >
-          <SignMaterial
-            material={materials['paper-sign']}
-            texture_url={controls_image.image?.path}
-            x={controls_image.pos_x}
-            y={controls_image.pos_y}
-            scale={controls_image.scale}
-          />
-        </mesh>
-      </group>
-    </CuboidCollider>
-  </RigidBody>
+      onRest: () => {
+
+        // hide the sign when it's below the ground
+        // - there's probably a better way to do this with react-spring..
+        if (react_spring_y.get() === 1) {
+          ref_mesh_group.current.visible = false
+        }
+
+        setAnimateDirection(prev => prev === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN)
+        setAnimation(false)
+      }
+    })
+  ), [])
+
+  const sign_animation = react_spring_y.to([0, 1], [0, -3.0])
+
+  const animateSign = () => {
+    if (animate_direction === DIRECTION.DOWN) {
+      react_spring_y.set(0)
+      react_spring_api.start({ react_spring_y: 1 })
+    }
+    else {
+      ref_mesh_group.current.visible = true
+      react_spring_y.set(1)
+      react_spring_api.start({ react_spring_y: 0 })
+    }
+  }
+
+  useEffect(() => {
+    if (is_animating) {
+      animateSign()
+    }
+  }, [is_animating])
+
+  // <animated.group> is from react-spring
+  // - kept separate from <RigidBody> as I'm only animating the mesh
+  // - experimented with animating the rapier <RigidBody> kinematic-type, but react-spring is smoother
+  //   and is only really used for the dice physics..
+  return <>
+    <RigidBody
+      ref={ref_sign}
+      type='fixed'
+      colliders={false}
+    >
+      <CuboidCollider
+        args={[0.95, position[1], 0.18]}
+        position={position}
+        rotation={rotation}
+      />
+    </RigidBody>
+
+    <animated.group
+      ref={ref_mesh_group}
+      position-x={position[0]}
+      position-y={sign_animation}
+      position-z={position[2]}
+      rotation={rotation}
+      scale={scale}
+      visible={!hidden}
+    >
+      <mesh
+        castShadow={castShadow}
+        geometry={nodes.post_1.geometry}
+        material={materials['sign-post']}
+      />
+
+      <mesh
+        castShadow={castShadow}
+        geometry={nodes.post_2.geometry}
+      >
+        <SignMaterial
+          material={materials['paper-sign']}
+          texture_url={controls_image.image?.path}
+          x={controls_image.pos_x}
+          y={controls_image.pos_y}
+          scale={controls_image.scale}
+        />
+      </mesh>
+    </animated.group>
+  </>
 }
 
 export default Sign

@@ -11,6 +11,7 @@ import D20 from './components/D20'
 import Room from './components/Room'
 import Warrior from './components/Warrior'
 import Sign from './components/Sign'
+import { generateLevel } from './common/Level'
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
 let Perf = null
@@ -18,6 +19,9 @@ let Perf = null
 if (parameterEnabled('PERF') || parameterEnabled('perf')) {
   Perf = (await import('r3f-perf')).Perf
 }
+
+
+let level = generateLevel()
 
 const Experience = () => {
   const
@@ -83,7 +87,7 @@ const Experience = () => {
       },
     },
 
-    { collapsed: true }
+    { collapsed: true, order: 1 }
   )
 
   // LIGHTING DEBUG
@@ -232,7 +236,7 @@ const Experience = () => {
       ),
     },
 
-    { collapsed: true }
+    { collapsed: true, order: 2 }
   )
 
   // PHYSICS DEBUG
@@ -245,7 +249,7 @@ const Experience = () => {
       }
     },
 
-    { collapsed: true }
+    { collapsed: true, order: 3 }
   )
 
 
@@ -264,7 +268,7 @@ const Experience = () => {
   // useEffect(() => {
   //   if (ref_d20_body.current) {
   //     d20_start.pos = vec3(ref_d20_body.current.translation())
-  //     d20_start.quatertion = quat(ref_d20_body.current.rotation())
+  //     d20_start.quaternion = quat(ref_d20_body.current.rotation())
   //   }
   // }, [])
 
@@ -273,6 +277,12 @@ const Experience = () => {
   //   ref_orbit_controls.current.target.set(0, 0, 0)
   //   ref_orbit_controls.current.update()
   // }, [])
+
+
+  if (level) {
+    console.log(level)
+  }
+
 
   return <>
 
@@ -331,7 +341,7 @@ const Experience = () => {
 
       <D20
         castShadow
-        position={[0, 6, 6]}
+        enabled={false}
       />
 
       <Room

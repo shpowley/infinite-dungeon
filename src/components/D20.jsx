@@ -34,25 +34,32 @@ const
   FILE_PXLMESH_LOGO = './models/d20-compressed.glb',
   FILE_SOUND_HIT = './sounds/hit.mp3'
 
+let
+  dice_roll_player = null,
+  dice_roll_monster = null
+
 useGLTF.preload(FILE_PXLMESH_LOGO)
 
-const D20 = ({ castShadow = false, position }) => {
+const D20 = ({ castShadow = false, position, enabled = false }) => {
   const
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
 
   const { nodes, materials } = useGLTF(FILE_PXLMESH_LOGO)
 
-  const [dice_sound] = useState({
-    media: new Audio(FILE_SOUND_HIT),
-    is_playing: false,
-  })
+  const
+    [dice_enabled, setDiceEnabled] = useState(enabled),
+
+    [dice_sound] = useState({
+      media: new Audio(FILE_SOUND_HIT),
+      is_playing: false,
+    })
 
   dice_sound.media.onended = () => {
     dice_sound.is_playing = false
   }
 
-  const handleDiceSound = (force) => {
+  const handleDiceSound = force => {
     if (force > 100 && !dice_sound.is_playing) {
       dice_sound.media.currentTime = 0
       dice_sound.media.volume = Math.min(force / 2000, 1)
@@ -64,9 +71,9 @@ const D20 = ({ castShadow = false, position }) => {
   }
 
   const rollD20 = () => {
-    if (!ref_d20_body.current) return
 
-
+    // don't roll if the d20 is already rolling
+    if (!ref_d20_body.current || !ref_d20_body.current.isSleeping()) return
 
     // COMMENT: REMOVED, BUT KEEPING AS REFERENCE CODE IF I NEED TO RESET THE ACTUAL POSITION / ROTATION
     // // randomize the roll position
@@ -96,7 +103,7 @@ const D20 = ({ castShadow = false, position }) => {
     }, true)
 
     ref_d20_body.current.applyTorqueImpulse({
-      x: randomFloat(-20, -10), // forward spin
+      x: randomFloat(-15, -5), // forward spin
       y: 0,
       z: randomFloat(-10, 10) // left/right spin
     }, true)
@@ -114,28 +121,42 @@ const D20 = ({ castShadow = false, position }) => {
 
     const intersect = raycaster.intersectObject(ref_d20_mesh.current, true)
 
-    console.log('YOU ROLLED A: ', FACE_ID_LOOKUP[intersect[0].faceIndex])
+    dice_roll_player = FACE_ID_LOOKUP[intersect[0].faceIndex]
+    console.log('YOU ROLLED A: ', dice_roll_player)
   }
 
+  // dice controls
   useControls(
     'dice',
+
     {
-      'roll D20': button(() => rollD20())
+      enabled: {
+        value: dice_enabled,
+        onChange: (value) => setDiceEnabled(value)
+      },
+
+      'roll d20': button(
+        () => rollD20(),
+        { disabled: !dice_enabled }
+      )
     },
-    { collapsed: true }
+
+    { collapsed: true, order: 6 },
+
+    [dice_enabled] // dependency array (required for enabling 'roll' button)
   )
 
   return (
+    dice_enabled &&
     <RigidBody
       ref={ref_d20_body}
       colliders='hull'
-      position={position}
+      position={position ?? [randomFloat(-5, 5), 6, 6]}
       rotation={[Math.random(), 0, Math.random()]}
       mass={1}
       restitution={0.4}
       friction={0.3}
 
-      onClick={rollD20}
       onSleep={onRollComplete}
       onContactForce={(payload) => { handleDiceSound(payload.totalForceMagnitude) }}
     >

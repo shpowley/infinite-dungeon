@@ -12,6 +12,11 @@ const FLOOR_ITEMS = {
     name: 'Treasure Chest',
     description: 'What could be inside?',
     value: 10,
+  },
+  KEY: {
+    type: 'key',
+    name: 'Key',
+    description: 'Opens floor boss room.'
   }
 }
 
@@ -33,27 +38,31 @@ const FLOOR_DATA = new Array(FLOOR_MAX)
 
     switch (index) {
       case 0:
+        new_floor.items = [FLOOR_ITEMS.KEY]
         new_floor.monsters = [MONSTERS.BLUE_SLIME]
         new_floor.boss = MONSTERS.SPIDER
         break
 
       case 1:
-        new_floor.items = [FLOOR_ITEMS.HEALTH_POTION]
+        new_floor.items = [FLOOR_ITEMS.HEALTH_POTION, FLOOR_ITEMS.KEY]
         new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.SPIDER]
         new_floor.boss = MONSTERS.GREEN_SLIME
         break
 
       case 2:
+        new_floor.items = [FLOOR_ITEMS.TREASURE_CHEST, FLOOR_ITEMS.KEY]
         new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME, MONSTERS.SPIDER]
         new_floor.boss = MONSTERS.RAT
         break
 
       case 3:
+        new_floor.items = [FLOOR_ITEMS.KEY]
         new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME, MONSTERS.RAT]
         new_floor.boss = MONSTERS.RAT
         break
 
       case 4:
+        new_floor.items = [FLOOR_ITEMS.HEALTH_POTION, FLOOR_ITEMS.KEY]
         new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME]
         new_floor.boss = MONSTERS.SLIME_SKULL
         break
@@ -498,14 +507,15 @@ const createRoom = (level, index) => {
   }
 }
 
-const generateLevel = (floor_number, prior_room) => {
+// randomly generates rooms
+const generateRooms = (floor_number, prior_room) => {
 
   // reset visited blocks and next blocks
   visited_blocks = []
   next_blocks = []
 
   // copy the level starter template
-  const level = [...LEVEL_TEMPLATE]
+  const rooms = [...LEVEL_TEMPLATE]
 
   // randomly determine the start room, unless it's the first level
   const start_room_index = prior_room
@@ -513,17 +523,17 @@ const generateLevel = (floor_number, prior_room) => {
     : PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
 
   // randomly determine the end room
-  const blocked_indices = [start_room_index, ...level[start_room_index].adjacent_blocks.map(block => block.index)]
+  const blocked_indices = [start_room_index, ...rooms[start_room_index].adjacent_blocks.map(block => block.index)]
   let end_room_index = PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
 
   while (blocked_indices.includes(end_room_index)) {
     end_room_index = PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
   }
 
-  createStartRoom(level, start_room_index, prior_room)
+  createStartRoom(rooms, start_room_index, prior_room)
   visited_blocks.push(start_room_index)
 
-  createEndRoom(level, end_room_index)
+  createEndRoom(rooms, end_room_index)
   visited_blocks.push(end_room_index)
 
   // create rooms
@@ -535,30 +545,91 @@ const generateLevel = (floor_number, prior_room) => {
     }
 
     visited_blocks.push(block_index)
-    createRoom(level, block_index)
+    createRoom(rooms, block_index)
   }
 
   return {
     room_start: {
       index: start_room_index,
-      level_door: level[start_room_index]?.level_door
+      level_door: rooms[start_room_index]?.level_door
     },
 
     room_end: {
       index: end_room_index,
-      level_door: level[end_room_index]?.level_door
+      level_door: rooms[end_room_index]?.level_door
     },
 
     floor_number,
 
-    level
+    rooms
   }
 }
 
+// retrieve floor data used to populate the level with monsters and items
 const getFloorData = (floor_number) => {
   const actual_floor_number = floor_number > FLOOR_MAX ? FLOOR_MAX : floor_number - 1
 
   return FLOOR_DATA[actual_floor_number]
 }
 
-export { generateLevel, getFloorData }
+// generate a level - combines rooms with monsters and items
+const generateLevel = () => {
+
+  // DEBUG ROOM
+  // const exit_room_debug = {
+  //   index: 7,
+  //   level_door: 'E'
+  // }
+
+  let
+    level = null,
+    room_count = 0,
+    min_room_count = 10,
+    attempts = 1,
+    max_attempts = 20
+
+  while (room_count <= min_room_count) {
+
+    // level = generateLevel(exit_room_debug)
+    level = generateRooms(1) // HARD-CODED FLOOR #1
+
+    room_count = level.rooms.filter(block => block.is_room).length
+
+    if (room_count <= min_room_count && attempts > max_attempts) {
+      console.warn(`TOO FEW ROOMS - ATTEMPT # ${attempts++}`)
+
+      break
+    }
+  }
+
+  const floor_data = getFloorData(level.floor_number)
+
+  // 1) pick 3-5 random rooms (not including the start and end rooms)
+  // 2) pick a random monster from the level's monster list and place it in the room
+  // 3) pick a random item from the level's item list and place it in the room with the monster
+  level.rooms
+    .filter(block => block.is_room && !block.start_room && !block.end_room)
+    .sort(() => Math.random() - 0.5) // shuffle
+    .slice(0, Math.floor(Math.random() * 3) + 3)
+    .forEach(room => {
+      const available_floor_monster_count = floor_data.monsters.length
+
+      if (available_floor_monster_count > 0) {
+        room.monster = available_floor_monster_count === 1
+          ? floor_data.monsters[0]
+          : floor_data.monsters[Math.floor(Math.random() * floor_data.monsters.length)]
+
+        if (floor_data.items.length > 0) {
+          room.item = floor_data.items.pop()
+          // console.log(room)
+        }
+      }
+    })
+
+  // place the boss in the end room
+  level.rooms[level.room_end.index].monster = floor_data.boss
+
+  return level
+}
+
+export { generateLevel }

@@ -43,7 +43,7 @@ const Warrior = ({ castShadow = false, position, rotation }) => {
       }
     },
 
-    { collapsed: true }
+    { collapsed: true, order: 4 }
   )
 
   const handleAnimation = (animation) => {
