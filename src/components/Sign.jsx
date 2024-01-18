@@ -11,10 +11,6 @@ const FILE_SIGN = './models/sign-compressed.glb'
 
 useGLTF.preload(FILE_SIGN)
 
-// direction not a state variable to prevent re-rendering when it itself changes,
-// placed outside of the component to still maintain value between renders..
-let animate_direction
-
 const getCanvasTexture = (texture, x, y, scale) => {
   const larger_dimension = Math.max(texture.image.width, texture.image.height)
   const ctx = document.createElement('canvas').getContext('2d')
@@ -54,7 +50,10 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
 
   const { nodes, materials } = useGLTF(FILE_SIGN)
 
-  const [is_animating, setAnimation] = useState(false)
+  const [animation, setAnimation] = useState({
+    is_animating: false,
+    direction: visible ? DIRECTION.DOWN : DIRECTION.UP
+  })
 
   // COMMENT:
   // note the syntax for useControls() here as it's a bit different due to the [controls_image, setControlsImage]
@@ -64,8 +63,11 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
 
     () => ({
       'show/hide': button(() => {
-        if (!is_animating) {
-          setAnimation(true)
+        if (!animation.is_animating) {
+          setAnimation(prev => ({
+            ...prev,
+            is_animating: true
+          }))
         }
       }),
 
@@ -115,7 +117,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
   // REACT SPRING - SIGN ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring((
     () => ({
-      react_spring_y: visible ? 0 : 1,
+      react_spring_y: visible ? 1 : 0,
       config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
 
       onRest: () => {
@@ -126,8 +128,10 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
           ref_mesh_group.current.visible = false
         }
 
-        animate_direction = animate_direction === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN
-        setAnimation(false)
+        setAnimation(prev => ({
+          is_animating: false,
+          direction: prev.direction === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN
+        }))
       }
     })
   ), [])
@@ -135,7 +139,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
   const sign_animation = react_spring_y.to([0, 1], [0, -3.0])
 
   const animateSign = () => {
-    if (animate_direction === DIRECTION.DOWN) {
+    if (animation.direction === DIRECTION.DOWN) {
       react_spring_y.set(0)
       react_spring_api.start({ react_spring_y: 1 })
     }
@@ -147,14 +151,10 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
   }
 
   useEffect(() => {
-    if (is_animating) {
+    if (animation.is_animating) {
       animateSign()
     }
-  }, [is_animating])
-
-  useEffect(() => {
-    animate_direction = visible ? DIRECTION.DOWN : DIRECTION.UP
-  }, [visible])
+  }, [animation.is_animating])
 
   // <animated.group> is from react-spring
   // - kept separate from <RigidBody> as I'm only animating the mesh
