@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { CuboidCollider, RigidBody } from "@react-three/rapier"
+import { useSpring, animated } from '@react-spring/three'
 
 import Door from './Door'
+import { button, useControls } from 'leva'
+import { DIRECTION } from '../common/Constants'
 
 const THICKNESS_EXTENT = 0.3
 
@@ -37,38 +40,100 @@ const
   material_floor = new THREE.MeshStandardMaterial({ color: '#93836c' })
 
 let room_receive_shadow = false
+let animate_direction // DIRECTION.UP or DIRECTION.DOWN (for use with react-spring animations)
 
 const Wall = ({ position, rotation, visible = true }) => {
-  return <RigidBody
-    type='kinematicPosition'
-    restitution={0.5}
-    friction={0}
-    colliders={false}
-  >
-    <CuboidCollider
-      args={ROOM_COLLIDER.wall_extents}
-      position={position}
-      rotation={rotation}
+  const ref_mesh_group = useRef()
+
+  const [is_animating, setAnimation] = useState(false)
+
+  useControls(
+    'walls',
+    {
+      'show/hide': button(() => {
+        if (!is_animating) {
+          setAnimation(true)
+        }
+      })
+    },
+    { collapsed: true, order: 4 }
+  )
+
+  // REACT-SPRING - WALL ANIMATION
+  const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
+    react_spring_y: visible ? 1 : 0,
+    config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
+
+    onRest: () => {
+      console.log('onRest')
+
+      animate_direction = animate_direction === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN
+      setAnimation(false)
+    }
+  }), [])
+
+  const wall_animation = react_spring_y.to([0, 1], [position[1], 10.0])
+
+  const animateWall = () => {
+    if (animate_direction === DIRECTION.DOWN) {
+      react_spring_y.set(0)
+      react_spring_api.start({ react_spring_y: 1 })
+    }
+    else {
+      react_spring_y.set(1)
+      react_spring_api.start({ react_spring_y: 0 })
+    }
+  }
+
+  useEffect(() => {
+    if (is_animating) {
+      animateWall()
+    }
+  }, [is_animating])
+
+  useEffect(() => {
+    animate_direction = visible ? DIRECTION.UP : DIRECTION.DOWN
+  }, [visible])
+
+  return <>
+    <RigidBody
+      type='fixed'
+      restitution={0.5}
+      friction={0}
+      colliders={false}
     >
-      <group visible={visible}>
-        <Door
-          position={[0, -ROOM_EXTENTS.height, 0.35]}
-          scale={[1.5, 1.5, 1.5]}
-        />
-        <mesh
-          receiveShadow={room_receive_shadow}
-          position={[0, -ROOM_COLLIDER.wall_extents[1] * 0.5, THICKNESS_EXTENT]}
-          geometry={geometry_plane_wall}
-          material={material_wall}
-        />
-      </group>
-    </CuboidCollider>
-  </RigidBody>
+      <CuboidCollider
+        args={ROOM_COLLIDER.wall_extents}
+        position={position}
+        rotation={rotation}
+      />
+    </RigidBody>
+
+    <animated.group
+      ref={ref_mesh_group}
+      position-x={position[0]}
+      position-y={wall_animation}
+      position-z={position[2]}
+      rotation={rotation}
+      visible={visible}
+    >
+      <Door
+        position={[0, -ROOM_EXTENTS.height, 0.35]}
+        scale={[1.5, 1.5, 1.5]}
+      />
+      <mesh
+        receiveShadow={room_receive_shadow}
+        position={[0, -ROOM_COLLIDER.wall_extents[1] * 0.5, THICKNESS_EXTENT]}
+        geometry={geometry_plane_wall}
+        material={material_wall}
+      />
+    </animated.group>
+  </>
 }
 
 const Floor = () => {
   return <RigidBody
-    type='kinematicPosition'
+    type='fixed'
     restitution={0.5}
     friction={0}
     colliders={false}
@@ -92,7 +157,7 @@ const Floor = () => {
 
 const Ceiling = () => {
   return <RigidBody
-    type='kinematicPosition'
+    type='fixed'
     restitution={0.5}
     friction={0}
     colliders={false}

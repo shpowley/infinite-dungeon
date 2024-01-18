@@ -5,15 +5,15 @@ import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import { useSpring, animated } from '@react-spring/three'
 import { button, useControls } from 'leva'
 import { MONSTERS } from '../common/Monsters'
+import { DIRECTION } from '../common/Constants'
 
 const FILE_SIGN = './models/sign-compressed.glb'
 
 useGLTF.preload(FILE_SIGN)
 
-const DIRECTION = {
-  DOWN: 0,
-  UP: 1
-}
+// direction not a state variable to prevent re-rendering when it itself changes,
+// placed outside of the component to still maintain value between renders..
+let animate_direction
 
 const getCanvasTexture = (texture, x, y, scale) => {
   const larger_dimension = Math.max(texture.image.width, texture.image.height)
@@ -49,17 +49,16 @@ const SignMaterial = ({ material, texture_url, x, y, scale }) => {
   />
 }
 
-const Sign = ({ castShadow = false, position, rotation, scale, hidden = true }) => {
-  const
-    ref_sign = useRef(),
-    ref_mesh_group = useRef()
+const Sign = ({ castShadow = false, position, rotation, scale, visible = false }) => {
+  const ref_mesh_group = useRef()
 
   const { nodes, materials } = useGLTF(FILE_SIGN)
 
-  const
-    [is_animating, setAnimation] = useState(false),
-    [animate_direction, setAnimateDirection] = useState(hidden ? DIRECTION.UP : DIRECTION.DOWN)
+  const [is_animating, setAnimation] = useState(false)
 
+  // COMMENT:
+  // note the syntax for useControls() here as it's a bit different due to the [controls_image, setControlsImage]
+  // 'setControlsImage' allows us to set the values of the controls_image object
   const [controls_image, setControlsImage] = useControls(
     'sign board',
 
@@ -116,7 +115,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, hidden = true }) 
   // REACT SPRING - SIGN ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring((
     () => ({
-      react_spring_y: hidden ? 1 : 0,
+      react_spring_y: visible ? 0 : 1,
       config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
 
       onRest: () => {
@@ -127,7 +126,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, hidden = true }) 
           ref_mesh_group.current.visible = false
         }
 
-        setAnimateDirection(prev => prev === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN)
+        animate_direction = animate_direction === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN
         setAnimation(false)
       }
     })
@@ -153,13 +152,16 @@ const Sign = ({ castShadow = false, position, rotation, scale, hidden = true }) 
     }
   }, [is_animating])
 
+  useEffect(() => {
+    animate_direction = visible ? DIRECTION.DOWN : DIRECTION.UP
+  }, [visible])
+
   // <animated.group> is from react-spring
   // - kept separate from <RigidBody> as I'm only animating the mesh
   // - experimented with animating the rapier <RigidBody> kinematic-type, but react-spring is smoother
   //   and is only really used for the dice physics..
   return <>
     <RigidBody
-      ref={ref_sign}
       type='fixed'
       colliders={false}
     >
@@ -177,7 +179,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, hidden = true }) 
       position-z={position[2]}
       rotation={rotation}
       scale={scale}
-      visible={!hidden}
+      visible={visible}
     >
       <mesh
         castShadow={castShadow}

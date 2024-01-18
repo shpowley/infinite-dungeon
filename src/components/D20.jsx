@@ -141,7 +141,7 @@ const D20 = ({ castShadow = false, position, enabled = false }) => {
       )
     },
 
-    { collapsed: true, order: 6 },
+    { collapsed: true, order: 7 },
 
     [dice_enabled] // dependency array (required for enabling 'roll' button)
   )
