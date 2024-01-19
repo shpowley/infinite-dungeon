@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { CuboidCollider, RigidBody } from "@react-three/rapier"
 import { useSpring, animated } from '@react-spring/three'
 
 import Door from './Door'
 import { button, useControls } from 'leva'
-import { DIRECTION } from '../common/Constants'
 
 const THICKNESS_EXTENT = 0.3
 
@@ -40,60 +39,91 @@ const
   material_floor = new THREE.MeshStandardMaterial({ color: '#93836c' })
 
 let room_receive_shadow = false
-let animate_direction // DIRECTION.UP or DIRECTION.DOWN (for use with react-spring animations)
 
-const Wall = ({ position, rotation, visible = true }) => {
+/**
+ * position:
+ *  position of the wall physics body and to a large extent the visible wall mesh
+ *  the visible wall mesh y-position is also controlled by animation
+ *
+ * rotation:
+ *  position of the wall physics body and the visible wall mesh
+ *
+ * visible:
+ *  whether or not the wall is visible (based on the orbit control camera angle)
+ *  this just sets the visibility of the wall mesh (should not affect animation)
+ *
+ *
+ * animation_props:
+ *
+ *  animate:
+ *    triggers wall animation
+ *
+ *  visible:
+ *    true = initial wall position / visibility in view
+ *    false = initial wall position / visibility above the ground plane (out of view)
+ *
+ *  delay:
+ *    the delay of the wall animation (react-spring)
+ *
+ *  friction:
+ *    the friction of the wall animation (react-spring)
+ */
+const ANIMATION_DEFAULTS = {
+  animate: false,
+  visible: false,
+  delay: 0,
+  friction: 90
+}
+
+const Wall = memo(({ position, rotation, visible = true, animation_props = { ...ANIMATION_DEFAULTS } }) => {
   const ref_mesh_group = useRef()
 
-  const [is_animating, setAnimation] = useState(false)
+  const [is_animating, setIsAnimating] = useState(false)
 
-  useControls(
-    'walls',
-    {
-      'show/hide': button(() => {
-        if (!is_animating) {
-          setAnimation(true)
-        }
-      })
-    },
-    { collapsed: true, order: 4 }
-  )
-
-  // REACT-SPRING - WALL ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
-    react_spring_y: visible ? 1 : 0,
-    config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
+    react_spring_y: animation_props.visible ? 0 : 1,
+    config: { mass: 6, tension: 400, friction: animation_props.friction },
 
     onRest: () => {
-      console.log('onRest')
 
-      animate_direction = animate_direction === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN
-      setAnimation(false)
+      // hide the wall when it's above the ground plane
+      if (react_spring_y.get() === 1) {
+        ref_mesh_group.current.visible = false
+      }
+
+      setIsAnimating(false)
     }
-  }), [])
+  }))
 
-  const wall_animation = react_spring_y.to([0, 1], [position[1], 10.0])
+  const wall_animation = react_spring_y.to([0, 1], [position[1], ROOM_EXTENTS.height * 3.5])
 
   const animateWall = () => {
-    if (animate_direction === DIRECTION.DOWN) {
+    setIsAnimating(true)
+
+    if (react_spring_y.get() === 0) {
       react_spring_y.set(0)
-      react_spring_api.start({ react_spring_y: 1 })
+
+      react_spring_api.start({
+        to: { react_spring_y: 1 },
+        delay: Math.random() * Math.max(animation_props.delay, 500),
+      })
     }
     else {
+      ref_mesh_group.current.visible = visible
       react_spring_y.set(1)
-      react_spring_api.start({ react_spring_y: 0 })
+
+      react_spring_api.start({
+        to: { react_spring_y: 0 },
+        delay: Math.random() * Math.max(animation_props.delay, 500),
+      })
     }
   }
 
   useEffect(() => {
-    if (is_animating) {
+    if (animation_props.animate && !is_animating) {
       animateWall()
     }
-  }, [is_animating])
-
-  useEffect(() => {
-    animate_direction = visible ? DIRECTION.UP : DIRECTION.DOWN
-  }, [visible])
+  }, [animation_props])
 
   return <>
     <RigidBody
@@ -115,7 +145,7 @@ const Wall = ({ position, rotation, visible = true }) => {
       position-y={wall_animation}
       position-z={position[2]}
       rotation={rotation}
-      visible={visible}
+      visible={visible && react_spring_y.get() === 0}
     >
       <Door
         position={[0, -ROOM_EXTENTS.height, 0.35]}
@@ -129,9 +159,9 @@ const Wall = ({ position, rotation, visible = true }) => {
       />
     </animated.group>
   </>
-}
+})
 
-const Floor = () => {
+const Floor = memo(() => {
   return <RigidBody
     type='fixed'
     restitution={0.5}
@@ -153,9 +183,9 @@ const Floor = () => {
       />
     </CuboidCollider>
   </RigidBody>
-}
+})
 
-const Ceiling = () => {
+const Ceiling = memo(() => {
   return <RigidBody
     type='fixed'
     restitution={0.5}
@@ -167,21 +197,86 @@ const Ceiling = () => {
       position={[0, ROOM_COLLIDER.top_position_y, 0]}
     />
   </RigidBody>
-}
+})
 
 const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
   let camera = null
 
-  const [walls_hidden, setWallsHidden] = useState({
-    SOUTH: true,
-    WEST: false,
-    NORTH: false,
-    EAST: false
-  })
+  const
+
+    // wall visibility based on camera angle
+    [walls_hidden, setWallsHidden] = useState({
+      NORTH: false,
+      SOUTH: true,
+      EAST: false,
+      WEST: false
+    }),
+
+    // wall animation properties (animate trigger, initial position, delay, friction)
+    [animation_props_north, setAnimationPropsNorth] = useState({ ...ANIMATION_DEFAULTS }),
+    [animation_props_south, setAnimationPropsSouth] = useState({ ...ANIMATION_DEFAULTS }),
+    [animation_props_east, setAnimationPropsEast] = useState({ ...ANIMATION_DEFAULTS }),
+    [animation_props_west, setAnimationPropsWest] = useState({ ...ANIMATION_DEFAULTS })
 
   const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
 
   room_receive_shadow = receiveShadow
+
+  useControls(
+    'wall animations',
+    {
+      'ALL walls': button(() => {
+        setAnimationPropsNorth(prev => ({
+          ...prev,
+          animate: true
+        }))
+
+        setAnimationPropsSouth(prev => ({
+          ...prev,
+          animate: true
+        }))
+
+        setAnimationPropsEast(prev => ({
+          ...prev,
+          animate: true
+        }))
+
+        setAnimationPropsWest(prev => ({
+          ...prev,
+          animate: true
+        }))
+      }),
+
+      'NORTH wall': button(() => {
+        setAnimationPropsNorth(prev => ({
+          ...prev,
+          animate: true
+        }))
+      }),
+
+      'SOUTH wall': button(() => {
+        setAnimationPropsSouth(prev => ({
+          ...prev,
+          animate: true
+        }))
+      }),
+
+      'EAST wall': button(() => {
+        setAnimationPropsEast(prev => ({
+          ...prev,
+          animate: true
+        }))
+      }),
+
+      'WEST wall': button(() => {
+        setAnimationPropsWest(prev => ({
+          ...prev,
+          animate: true
+        }))
+      })
+    },
+    { collapsed: true, order: 4 }
+  )
 
   // COMMENT: REASON FOR THE CAMERA ANGLE CALCULATION LOGIC
   // - WALLS ARE AUTOMATICALLY HIDDEN DUE TO BACKFACE CULLING, BUT DOORS ARE NOT
@@ -199,6 +294,7 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
     return lower_range_test || upper_range_test
   }
 
+  // triggered from useEffect()
   const calculateCameraAngle = () => {
     if (camera) {
       let angle_radians = Math.atan2(
@@ -208,11 +304,23 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
 
       const camera_yaw = THREE.MathUtils.radToDeg(angle_radians)
 
-      setWallsHidden({
-        SOUTH: calculateRange(0, camera_yaw),
-        EAST: calculateRange(90, camera_yaw),
-        NORTH: calculateRange(180, camera_yaw),
-        WEST: calculateRange(-90, camera_yaw)
+      setWallsHidden(prev => {
+        const walls_hidden = {
+          SOUTH: calculateRange(0, camera_yaw),
+          EAST: calculateRange(90, camera_yaw),
+          NORTH: calculateRange(180, camera_yaw),
+          WEST: calculateRange(-90, camera_yaw)
+        }
+
+        if (walls_hidden.SOUTH !== prev.SOUTH
+          || walls_hidden.EAST !== prev.EAST
+          || walls_hidden.NORTH !== prev.NORTH
+          || walls_hidden.WEST !== prev.WEST) {
+          return walls_hidden
+        }
+        else {
+          return prev
+        }
       })
     }
   }
@@ -234,26 +342,34 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
 
   return <>
     <Wall
+      id='NORTH'
       position={[0, ROOM_COLLIDER.wall_position_y, -dimension]}
       visible={!walls_hidden.NORTH}
+      animation_props={animation_props_north}
     />
 
     <Wall
+      id='SOUTH'
       position={[0, ROOM_COLLIDER.wall_position_y, dimension]}
       rotation={[0, Math.PI, 0]}
       visible={!walls_hidden.SOUTH}
+      animation_props={animation_props_south}
     />
 
     <Wall
+      id='EAST'
       position={[dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, -Math.PI * 0.5, 0]}
       visible={!walls_hidden.EAST}
+      animation_props={animation_props_east}
     />
 
     <Wall
+      id='WEST'
       position={[-dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, Math.PI * 0.5, 0]}
       visible={!walls_hidden.WEST}
+      animation_props={animation_props_west}
     />
 
     <Ceiling />

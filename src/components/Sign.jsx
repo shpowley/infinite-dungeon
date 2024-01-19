@@ -5,7 +5,6 @@ import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import { useSpring, animated } from '@react-spring/three'
 import { button, useControls } from 'leva'
 import { MONSTERS } from '../common/Monsters'
-import { DIRECTION } from '../common/Constants'
 
 const FILE_SIGN = './models/sign-compressed.glb'
 
@@ -50,24 +49,18 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
 
   const { nodes, materials } = useGLTF(FILE_SIGN)
 
-  const [animation, setAnimation] = useState({
-    is_animating: false,
-    direction: visible ? DIRECTION.DOWN : DIRECTION.UP
-  })
+  const [is_animating, setIsAnimating] = useState(false)
 
   // COMMENT:
-  // note the syntax for useControls() here as it's a bit different due to the [controls_image, setControlsImage]
-  // 'setControlsImage' allows us to set the values of the controls_image object
+  //  note the syntax for useControls() here as it's a bit different due to the [controls_image, setControlsImage]
+  //  'setControlsImage' allows us to set the values of the controls_image object
   const [controls_image, setControlsImage] = useControls(
     'sign board',
 
     () => ({
       'show/hide': button(() => {
-        if (!animation.is_animating) {
-          setAnimation(prev => ({
-            ...prev,
-            is_animating: true
-          }))
+        if (!is_animating) {
+          setIsAnimating(true)
         }
       }),
 
@@ -115,31 +108,26 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
   )
 
   // REACT SPRING - SIGN ANIMATION
-  const [{ react_spring_y }, react_spring_api] = useSpring((
-    () => ({
-      react_spring_y: visible ? 1 : 0,
-      config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
+  const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
+    react_spring_y: visible ? 0 : 1,
+    config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
 
-      onRest: () => {
+    onRest: () => {
 
-        // hide the sign when it's below the ground
-        // - there's probably a better way to do this with react-spring..
-        if (react_spring_y.get() === 1) {
-          ref_mesh_group.current.visible = false
-        }
-
-        setAnimation(prev => ({
-          is_animating: false,
-          direction: prev.direction === DIRECTION.DOWN ? DIRECTION.UP : DIRECTION.DOWN
-        }))
+      // hide the sign when it's below the ground
+      // - there's probably a better way to do this with react-spring..
+      if (react_spring_y.get() === 1) {
+        ref_mesh_group.current.visible = false
       }
-    })
-  ), [])
+
+      setIsAnimating(false)
+    }
+  }))
 
   const sign_animation = react_spring_y.to([0, 1], [0, -3.0])
 
   const animateSign = () => {
-    if (animation.direction === DIRECTION.DOWN) {
+    if (react_spring_y.get() === 0) {
       react_spring_y.set(0)
       react_spring_api.start({ react_spring_y: 1 })
     }
@@ -151,10 +139,10 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
   }
 
   useEffect(() => {
-    if (animation.is_animating) {
+    if (is_animating) {
       animateSign()
     }
-  }, [animation.is_animating])
+  }, [is_animating])
 
   // <animated.group> is from react-spring
   // - kept separate from <RigidBody> as I'm only animating the mesh

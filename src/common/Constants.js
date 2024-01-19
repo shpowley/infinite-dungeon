@@ -15,9 +15,4 @@ const CAMERA_DEFAULTS = {
   position: [0, 10, 16.5],
 }
 
-const DIRECTION = {
-  DOWN: 0,
-  UP: 1
-}
-
-export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS, DIRECTION }
+export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS }
