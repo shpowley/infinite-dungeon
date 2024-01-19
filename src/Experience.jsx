@@ -5,7 +5,7 @@ import { OrbitControls, useHelper } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
-import { CAMERA_DEFAULTS } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room from './components/Room'
@@ -20,11 +20,6 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
   Perf = (await import('r3f-perf')).Perf
 }
 
-const ANIMATION_DEFAULT_STATE = {
-  animate: false,
-  visible: false
-}
-
 let level = generateLevel()
 
 const Experience = () => {
@@ -34,18 +29,17 @@ const Experience = () => {
     ref_shadow_camera = useRef()
 
   const
-    [animation_walls, setAnimationWalls] = useState({ ...ANIMATION_DEFAULT_STATE }),
-    [animation_warrior, setAnimationWarrior] = useState({ ...ANIMATION_DEFAULT_STATE }),
-    [animation_sign, setAnimationSign] = useState({ ...ANIMATION_DEFAULT_STATE }),
-    [animation_d20, setAnimationD20] = useState({ ...ANIMATION_DEFAULT_STATE })
-
-  // STOPPED HERE
+    [animation_walls, setAnimationWalls] = useState({ ...ANIMATION_DEFAULTS }),
+    [animation_warrior, setAnimationWarrior] = useState({ ...ANIMATION_DEFAULTS }),
+    [animation_sign, setAnimationSign] = useState({ ...ANIMATION_DEFAULTS }),
+    [d20_player_enabled, setD20PlayerEnabled] = useState(false),
+    [d20_player_roll, setD20PlayerRoll] = useState(false)
 
   /**
    * DEBUG CONTROLS
    */
 
-  // CAMERA DEBUG CONTROLS
+  // CAMERA DEBUG
   const camera = useThree(state => state.camera)
 
   useControls(
@@ -266,31 +260,78 @@ const Experience = () => {
 
   // ROOM / LEVEL ANIMATION DEBUG
   useControls(
-    'room (parent component)',
+    'dungeon room',
 
     {
-      'entire room': button(() => {
-        console.log('show/hide room')
-      }),
+      'entire room': folder(
+        {
+          level_select: {
+            label: 'level',
+            value: 1,
+            min: 1,
+            max: 30,
+            step: 1,
+          },
+          room_select: {
+            label: 'room',
+            value: 1,
+            min: 1,
+            max: 16,
+            step: 1,
+          },
+          'build room': button(() => {
+            console.log('show/hide room')
+          }),
+        },
+        { collapsed: true }
+      ),
 
-      'show/hide walls': button(() => {
-        console.log('show/hide walls')
-      }),
+      'individuals objects': folder(
+        {
+          'walls - show/hide': button(() => {
+            console.log('show/hide walls')
+          }),
 
-      'show/hide sign': button(() => {
-        console.log('show/hide sign')
-      }),
+          'sign - show/hide': button(() => {
+            setAnimationSign({
+              ...animation_sign,
+              animate: true
+            })
+          }),
 
-      'show/hide warrior': button(() => {
-        console.log('show/hide warrior')
-      }),
+          'warrior - show/hide': button(() => {
+            setAnimationWarrior({
+              ...animation_warrior,
+              animate: true
+            })
+          }),
 
-      'show/hide red d20': button(() => {
-        console.log('show/hide red d20')
-      })
+          'd20 player': folder(
+            {
+              d20_player_enable: {
+                label: 'show dice',
+                value: d20_player_enabled,
+                onChange: value => setD20PlayerEnabled(value)
+              },
+
+              'roll player d20': button(
+                () => {
+                  console.log('show/hide red d20')
+                  setD20PlayerRoll(true)
+                },
+                { disabled: !d20_player_enabled }
+              )
+            },
+            { collapsed: true }
+          )
+        },
+        { collapsed: true }
+      ),
     },
 
-    { collapsed: true, order: 4 }
+    { collapsed: true, order: 4 },
+
+    [d20_player_enabled] // dependency array (required for enabling 'roll' button)
   )
 
 
@@ -371,6 +412,7 @@ const Experience = () => {
         castShadow
         position={[1.5, 0.8, 1.5]}
         rotation={[0, -Math.PI * 0.75, 0]}
+        animation_props={animation_warrior}
       />
 
       <Sign
@@ -378,11 +420,13 @@ const Experience = () => {
         position={[-1, 1.3, -1]}
         scale={[1.4, 1.4, 1.4]}
         rotation={[0, Math.PI * 0.25, 0]}
+        animation_props={animation_sign}
       />
 
       <D20
         castShadow
-        enabled={false}
+        enabled={d20_player_enabled}
+        roll={d20_player_roll}
       />
 
       <Room

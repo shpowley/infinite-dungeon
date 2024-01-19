@@ -15,4 +15,10 @@ const CAMERA_DEFAULTS = {
   position: [0, 10, 16.5],
 }
 
-export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS }
+// REACT-SPRING RELATED PROPS
+const ANIMATION_DEFAULTS = {
+  animate: false, // trigger animation
+  visible: false  // initial visibility state
+}
+
+export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS, ANIMATION_DEFAULTS }

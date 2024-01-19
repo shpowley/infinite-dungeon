@@ -4,6 +4,7 @@ import { useAnimations, useGLTF } from "@react-three/drei"
 import { CylinderCollider, RigidBody } from "@react-three/rapier"
 import { useSpring, animated } from '@react-spring/three'
 import { button, useControls } from 'leva'
+import { ANIMATION_DEFAULTS } from "../common/Constants"
 
 const FILE_WARRIOR = './models/warrior-compressed.glb'
 
@@ -22,12 +23,6 @@ const MESH_ANIMATIONS = {
   RUN: 'run.f',
 }
 
-// REACT-SPRING RELATED PROPS
-const ANIMATION_DEFAULTS = {
-  animate: false,
-  visible: false, // controls react-spring position & visibility
-}
-
 const Warrior = ({ castShadow = false, position, rotation, animation_props = { ...ANIMATION_DEFAULTS } }) => {
   const ref_mesh_group = useRef()
 
@@ -42,13 +37,12 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
 
   // REACT-SPRING ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
-    // react_spring_y: animation_props.visible ? 0 : 1,
-    react_spring_y: 0,
+    react_spring_y: animation_props.visible ? 0 : 1,
     config: { mass: 10, tension: 300, friction: 100 },
 
     onRest: () => {
 
-      // hide the wall when it's above the ground plane
+      // hide the warrior when it's above the ground plane
       if (react_spring_y.get() === 1) {
         ref_mesh_group.current.visible = false
       }
@@ -60,8 +54,6 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
   const warrior_animation = react_spring_y.to([0, 1], [0, 14.0])
 
   const animateWarrior = () => {
-    // setIsAnimating(true)
-
     if (react_spring_y.get() === 0) {
       react_spring_y.set(0)
       react_spring_api.start({ react_spring_y: 1 })
@@ -78,12 +70,6 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
     'warrior',
 
     {
-      'show/hide': button(() => {
-        if (!is_animating) {
-          setIsAnimating(true)
-        }
-      }),
-
       selected_animation: {
         label: 'animation',
         options: MESH_ANIMATIONS,
@@ -125,10 +111,10 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
     // console.log('animation_props.animate', animation_props.animate)
     // console.log('is_animating', is_animating)
 
-    if (animation_props.animate || is_animating) {
+    if (animation_props.animate && !is_animating) {
       animateWarrior()
     }
-  }, [animation_props.animate, is_animating])
+  }, [animation_props])
 
   return <>
     <RigidBody
@@ -150,6 +136,7 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
       position-y={warrior_animation}
       position-z={position[2] + 0.2}
       rotation={rotation}
+      visible={animation_props.visible}
     >
       <primitive object={nodes._rootJoint} />
       <skinnedMesh

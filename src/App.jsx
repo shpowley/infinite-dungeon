@@ -5,7 +5,6 @@ import { Leva, useControls } from "leva"
 import Experience from "./Experience"
 import { parameterEnabled } from "./common/Utils"
 import { CAMERA_DEFAULTS, TONE_MAPPING_OPTIONS } from "./common/Constants"
-import { generateLevel } from "./common/Level"
 
 const debug_enabled = parameterEnabled('DEBUG') || parameterEnabled('debug')
 

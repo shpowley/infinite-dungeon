@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useGLTF, useTexture } from '@react-three/drei'
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import { useSpring, animated } from '@react-spring/three'
-import { button, useControls } from 'leva'
+import { useControls } from 'leva'
 import { MONSTERS } from '../common/Monsters'
+import { ANIMATION_DEFAULTS } from '../common/Constants'
 
 const FILE_SIGN = './models/sign-compressed.glb'
 
@@ -44,7 +45,7 @@ const SignMaterial = ({ material, texture_url, x, y, scale }) => {
   />
 }
 
-const Sign = ({ castShadow = false, position, rotation, scale, visible = false }) => {
+const Sign = memo(({ castShadow = false, position, rotation, scale, animation_props = {...ANIMATION_DEFAULTS} }) => {
   const ref_mesh_group = useRef()
 
   const { nodes, materials } = useGLTF(FILE_SIGN)
@@ -58,12 +59,6 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
     'sign board',
 
     () => ({
-      'show/hide': button(() => {
-        if (!is_animating) {
-          setIsAnimating(true)
-        }
-      }),
-
       image: {
         value: 'NONE',
         options: MONSTERS,
@@ -109,7 +104,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
 
   // REACT SPRING - SIGN ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
-    react_spring_y: visible ? 0 : 1,
+    react_spring_y: animation_props.visible ? 0 : 1,
     config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
 
     onRest: () => {
@@ -139,10 +134,10 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
   }
 
   useEffect(() => {
-    if (is_animating) {
+    if (animation_props.animate && !is_animating) {
       animateSign()
     }
-  }, [is_animating])
+  }, [animation_props])
 
   // <animated.group> is from react-spring
   // - kept separate from <RigidBody> as I'm only animating the mesh
@@ -167,7 +162,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
       position-z={position[2]}
       rotation={rotation}
       scale={scale}
-      visible={visible}
+      visible={animation_props.visible}
     >
       <mesh
         castShadow={castShadow}
@@ -189,6 +184,6 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
       </mesh>
     </animated.group>
   </>
-}
+})
 
 export default Sign

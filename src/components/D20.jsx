@@ -1,9 +1,8 @@
-import { memo, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import { RigidBody } from '@react-three/rapier'
 import { randomFloat } from '../common/Utils'
-import { button, useControls } from 'leva'
 
 // face id lookup table -- specific to this model only!
 // see NOTES.txt on how to do this
@@ -34,13 +33,11 @@ const
   FILE_PXLMESH_LOGO = './models/d20-compressed.glb',
   FILE_SOUND_HIT = './sounds/hit.mp3'
 
-let
-  dice_roll_player = null,
-  dice_roll_monster = null
+let dice_roll_value = null
 
 useGLTF.preload(FILE_PXLMESH_LOGO)
 
-const D20 = memo(({ castShadow = false, position, enabled = false }) => {
+const D20 = memo(({ castShadow = false, position, enabled = false, roll = false }) => {
   const
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
@@ -48,8 +45,6 @@ const D20 = memo(({ castShadow = false, position, enabled = false }) => {
   const { nodes, materials } = useGLTF(FILE_PXLMESH_LOGO)
 
   const
-    [dice_enabled, setDiceEnabled] = useState(enabled),
-
     [dice_sound] = useState({
       media: new Audio(FILE_SOUND_HIT),
       is_playing: false,
@@ -121,33 +116,18 @@ const D20 = memo(({ castShadow = false, position, enabled = false }) => {
 
     const intersect = raycaster.intersectObject(ref_d20_mesh.current, true)
 
-    dice_roll_player = FACE_ID_LOOKUP[intersect[0].faceIndex]
-    console.log('YOU ROLLED A: ', dice_roll_player)
+    dice_roll_value = FACE_ID_LOOKUP[intersect[0].faceIndex]
+    console.log('YOU ROLLED A: ', dice_roll_value)
   }
 
-  // dice controls
-  useControls(
-    'dice',
-
-    {
-      enabled: {
-        value: dice_enabled,
-        onChange: (value) => setDiceEnabled(value)
-      },
-
-      'roll d20': button(
-        () => rollD20(),
-        { disabled: !dice_enabled }
-      )
-    },
-
-    { collapsed: true, order: 8 },
-
-    [dice_enabled] // dependency array (required for enabling 'roll' button)
-  )
+  useEffect(() => {
+    if (enabled && roll) {
+      rollD20()
+    }
+  }, [roll])
 
   return (
-    dice_enabled &&
+    enabled &&
     <RigidBody
       ref={ref_d20_body}
       colliders='hull'
