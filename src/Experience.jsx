@@ -1,9 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, useHelper } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
-import { folder, useControls } from "leva"
+import { button, folder, useControls } from "leva"
 
 import { CAMERA_DEFAULTS } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
@@ -20,6 +20,10 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
   Perf = (await import('r3f-perf')).Perf
 }
 
+const ANIMATION_DEFAULT_STATE = {
+  animate: false,
+  visible: false
+}
 
 let level = generateLevel()
 
@@ -28,6 +32,14 @@ const Experience = () => {
     ref_orbit_controls = useRef(),
     ref_light = useRef(),
     ref_shadow_camera = useRef()
+
+  const
+    [animation_walls, setAnimationWalls] = useState({ ...ANIMATION_DEFAULT_STATE }),
+    [animation_warrior, setAnimationWarrior] = useState({ ...ANIMATION_DEFAULT_STATE }),
+    [animation_sign, setAnimationSign] = useState({ ...ANIMATION_DEFAULT_STATE }),
+    [animation_d20, setAnimationD20] = useState({ ...ANIMATION_DEFAULT_STATE })
+
+  // STOPPED HERE
 
   /**
    * DEBUG CONTROLS
@@ -250,6 +262,35 @@ const Experience = () => {
     },
 
     { collapsed: true, order: 3 }
+  )
+
+  // ROOM / LEVEL ANIMATION DEBUG
+  useControls(
+    'room (parent component)',
+
+    {
+      'entire room': button(() => {
+        console.log('show/hide room')
+      }),
+
+      'show/hide walls': button(() => {
+        console.log('show/hide walls')
+      }),
+
+      'show/hide sign': button(() => {
+        console.log('show/hide sign')
+      }),
+
+      'show/hide warrior': button(() => {
+        console.log('show/hide warrior')
+      }),
+
+      'show/hide red d20': button(() => {
+        console.log('show/hide red d20')
+      })
+    },
+
+    { collapsed: true, order: 4 }
   )
 
 

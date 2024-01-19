@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import { RigidBody } from '@react-three/rapier'
@@ -40,7 +40,7 @@ let
 
 useGLTF.preload(FILE_PXLMESH_LOGO)
 
-const D20 = ({ castShadow = false, position, enabled = false }) => {
+const D20 = memo(({ castShadow = false, position, enabled = false }) => {
   const
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
@@ -141,7 +141,7 @@ const D20 = ({ castShadow = false, position, enabled = false }) => {
       )
     },
 
-    { collapsed: true, order: 7 },
+    { collapsed: true, order: 8 },
 
     [dice_enabled] // dependency array (required for enabling 'roll' button)
   )
@@ -171,7 +171,7 @@ const D20 = ({ castShadow = false, position, enabled = false }) => {
       </group>
     </RigidBody>
   )
-}
+})
 
 export { FACE_ID_LOOKUP }
 export default D20

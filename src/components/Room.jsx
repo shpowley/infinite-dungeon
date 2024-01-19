@@ -40,6 +40,13 @@ const
 
 let room_receive_shadow = false
 
+const ANIMATION_DEFAULTS = {
+  animate: false,
+  visible: false,
+  delay: 0,
+  friction: 90
+}
+
 /**
  * position:
  *  position of the wall physics body and to a large extent the visible wall mesh
@@ -68,16 +75,8 @@ let room_receive_shadow = false
  *  friction:
  *    the friction of the wall animation (react-spring)
  */
-const ANIMATION_DEFAULTS = {
-  animate: false,
-  visible: false,
-  delay: 0,
-  friction: 90
-}
-
 const Wall = memo(({ position, rotation, visible = true, animation_props = { ...ANIMATION_DEFAULTS } }) => {
   const ref_mesh_group = useRef()
-
   const [is_animating, setIsAnimating] = useState(false)
 
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
@@ -275,7 +274,7 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
         }))
       })
     },
-    { collapsed: true, order: 4 }
+    { collapsed: true, order: 5 }
   )
 
   // COMMENT: REASON FOR THE CAMERA ANGLE CALCULATION LOGIC

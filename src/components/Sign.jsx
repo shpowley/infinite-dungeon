@@ -104,7 +104,7 @@ const Sign = ({ castShadow = false, position, rotation, scale, visible = false }
       },
     }),
 
-    { collapsed: true, order: 5 }
+    { collapsed: true, order: 6 }
   )
 
   // REACT SPRING - SIGN ANIMATION
