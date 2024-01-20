@@ -1,5 +1,15 @@
 import * as THREE from 'three'
 
+const LEVA_SORT_ORDER = {
+  TONE_MAPPING: 0,
+  CAMERA: 1,
+  LIGHTING: 2,
+  PHYSICS: 3,
+  DUNGEON: 4,
+  SIGN: 5,
+  WARRIOR: 6
+}
+
 const TONE_MAPPING_OPTIONS = {
   None: THREE.NoToneMapping,
   Linear: THREE.LinearToneMapping,
@@ -21,4 +31,4 @@ const ANIMATION_DEFAULTS = {
   visible: false  // initial visibility state
 }
 
-export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS, ANIMATION_DEFAULTS }
+export { TONE_MAPPING_OPTIONS, CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER }

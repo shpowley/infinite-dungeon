@@ -5,6 +5,7 @@ import { useSpring, animated } from '@react-spring/three'
 
 import Door from './Door'
 import { button, useControls } from 'leva'
+import { ANIMATION_DEFAULTS } from '../common/Constants'
 
 const THICKNESS_EXTENT = 0.3
 
@@ -40,9 +41,8 @@ const
 
 let room_receive_shadow = false
 
-const ANIMATION_DEFAULTS = {
-  animate: false,
-  visible: false,
+const ROOM_ANIMATION_DEFAULTS = {
+  ...ANIMATION_DEFAULTS,
   delay: 0,
   friction: 90
 }
@@ -75,7 +75,7 @@ const ANIMATION_DEFAULTS = {
  *  friction:
  *    the friction of the wall animation (react-spring)
  */
-const Wall = memo(({ position, rotation, visible = true, animation_props = { ...ANIMATION_DEFAULTS } }) => {
+const Wall = memo(({ position, rotation, visible = true, animation_props = { ...ROOM_ANIMATION_DEFAULTS } }) => {
   const ref_mesh_group = useRef()
   const [is_animating, setIsAnimating] = useState(false)
 
@@ -198,8 +198,13 @@ const Ceiling = memo(() => {
   </RigidBody>
 })
 
-const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
+const Room = ({ receiveShadow = false, ref_orbit_controls, animation_props = { ...ANIMATION_DEFAULTS } }) => {
   let camera = null
+
+  const animation_props_default = {
+    ...ROOM_ANIMATION_DEFAULTS,
+    ...animation_props
+  }
 
   const
 
@@ -211,71 +216,15 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
       WEST: false
     }),
 
-    // wall animation properties (animate trigger, initial position, delay, friction)
-    [animation_props_north, setAnimationPropsNorth] = useState({ ...ANIMATION_DEFAULTS }),
-    [animation_props_south, setAnimationPropsSouth] = useState({ ...ANIMATION_DEFAULTS }),
-    [animation_props_east, setAnimationPropsEast] = useState({ ...ANIMATION_DEFAULTS }),
-    [animation_props_west, setAnimationPropsWest] = useState({ ...ANIMATION_DEFAULTS })
+    // individual wall animation properties
+    [animation_props_north, setAnimationPropsNorth] = useState(animation_props_default),
+    [animation_props_south, setAnimationPropsSouth] = useState(animation_props_default),
+    [animation_props_east, setAnimationPropsEast] = useState(animation_props_default),
+    [animation_props_west, setAnimationPropsWest] = useState(animation_props_default)
 
   const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
 
   room_receive_shadow = receiveShadow
-
-  useControls(
-    'wall animations',
-    {
-      'ALL walls': button(() => {
-        setAnimationPropsNorth(prev => ({
-          ...prev,
-          animate: true
-        }))
-
-        setAnimationPropsSouth(prev => ({
-          ...prev,
-          animate: true
-        }))
-
-        setAnimationPropsEast(prev => ({
-          ...prev,
-          animate: true
-        }))
-
-        setAnimationPropsWest(prev => ({
-          ...prev,
-          animate: true
-        }))
-      }),
-
-      'NORTH wall': button(() => {
-        setAnimationPropsNorth(prev => ({
-          ...prev,
-          animate: true
-        }))
-      }),
-
-      'SOUTH wall': button(() => {
-        setAnimationPropsSouth(prev => ({
-          ...prev,
-          animate: true
-        }))
-      }),
-
-      'EAST wall': button(() => {
-        setAnimationPropsEast(prev => ({
-          ...prev,
-          animate: true
-        }))
-      }),
-
-      'WEST wall': button(() => {
-        setAnimationPropsWest(prev => ({
-          ...prev,
-          animate: true
-        }))
-      })
-    },
-    { collapsed: true, order: 5 }
-  )
 
   // COMMENT: REASON FOR THE CAMERA ANGLE CALCULATION LOGIC
   // - WALLS ARE AUTOMATICALLY HIDDEN DUE TO BACKFACE CULLING, BUT DOORS ARE NOT
@@ -338,6 +287,30 @@ const Room = ({ receiveShadow = false, ref_orbit_controls }) => {
       ref_orbit_controls.current.removeEventListener('change', calculateCameraAngle)
     }
   }, [ref_orbit_controls])
+
+  useEffect(() => {
+    if (animation_props.animate) {
+      setAnimationPropsNorth(prev => ({
+        ...prev,
+        animate: true
+      }))
+
+      setAnimationPropsSouth(prev => ({
+        ...prev,
+        animate: true
+      }))
+
+      setAnimationPropsEast(prev => ({
+        ...prev,
+        animate: true
+      }))
+
+      setAnimationPropsWest(prev => ({
+        ...prev,
+        animate: true
+      }))
+    }
+  }, [animation_props])
 
   return <>
     <Wall

@@ -4,7 +4,7 @@ import { useAnimations, useGLTF } from "@react-three/drei"
 import { CylinderCollider, RigidBody } from "@react-three/rapier"
 import { useSpring, animated } from '@react-spring/three'
 import { button, useControls } from 'leva'
-import { ANIMATION_DEFAULTS } from "../common/Constants"
+import { ANIMATION_DEFAULTS, LEVA_SORT_ORDER } from "../common/Constants"
 
 const FILE_WARRIOR = './models/warrior-compressed.glb'
 
@@ -76,7 +76,7 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
       }
     },
 
-    { collapsed: true, order: 7 }
+    { collapsed: true, order: LEVA_SORT_ORDER.WARRIOR }
   )
 
   const handleMeshAnimation = (animation) => {

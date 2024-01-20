@@ -5,7 +5,7 @@ import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import { useSpring, animated } from '@react-spring/three'
 import { useControls } from 'leva'
 import { MONSTERS } from '../common/Monsters'
-import { ANIMATION_DEFAULTS } from '../common/Constants'
+import { ANIMATION_DEFAULTS, LEVA_SORT_ORDER } from '../common/Constants'
 
 const FILE_SIGN = './models/sign-compressed.glb'
 
@@ -56,7 +56,7 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
   //  note the syntax for useControls() here as it's a bit different due to the [controls_image, setControlsImage]
   //  'setControlsImage' allows us to set the values of the controls_image object
   const [controls_image, setControlsImage] = useControls(
-    'sign board',
+    'monster sign',
 
     () => ({
       image: {
@@ -99,7 +99,7 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
       },
     }),
 
-    { collapsed: true, order: 6 }
+    { collapsed: true, order: LEVA_SORT_ORDER.SIGN }
   )
 
   // REACT SPRING - SIGN ANIMATION
@@ -136,6 +136,15 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
   useEffect(() => {
     if (animation_props.animate && !is_animating) {
       animateSign()
+    }
+
+    if (animation_props.monster !== controls_image.image) {
+      setControlsImage({
+        image: animation_props.monster,
+        pos_x: animation_props.monster_pos_x ?? 0,
+        pos_y: animation_props.monster_pos_y ?? 0,
+        scale: animation_props.monster_scale ?? 1,
+      })
     }
   }, [animation_props])
 

@@ -1,17 +1,23 @@
-import { useRef, useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, useHelper } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
-import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room from './components/Room'
 import Warrior from './components/Warrior'
 import Sign from './components/Sign'
 import { generateLevel } from './common/Level'
+import { MONSTERS } from './common/Monsters'
+
+const sign_props_default = {
+  ...ANIMATION_DEFAULTS,
+  monster: 'NONE'
+}
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
 let Perf = null
@@ -22,18 +28,23 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
 
 let level = generateLevel()
 
-const Experience = () => {
+const Experience = memo(() => {
   const
     ref_orbit_controls = useRef(),
     ref_light = useRef(),
     ref_shadow_camera = useRef()
 
   const
-    [animation_walls, setAnimationWalls] = useState({ ...ANIMATION_DEFAULTS }),
-    [animation_warrior, setAnimationWarrior] = useState({ ...ANIMATION_DEFAULTS }),
-    [animation_sign, setAnimationSign] = useState({ ...ANIMATION_DEFAULTS }),
+    [animation_walls, setAnimationWalls] = useState(ANIMATION_DEFAULTS),
+    [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
+    [animation_sign, setAnimationSign] = useState(sign_props_default),
     [d20_player_enabled, setD20PlayerEnabled] = useState(false),
-    [d20_player_roll, setD20PlayerRoll] = useState(false)
+    [d20_player_roll, setD20PlayerRoll] = useState(false),
+
+    [leva_dungeon_info, setLevaDungeonInfo] = useState({
+      floor_select: 1,
+      room_select: 1,
+    })
 
   /**
    * DEBUG CONTROLS
@@ -93,7 +104,7 @@ const Experience = () => {
       },
     },
 
-    { collapsed: true, order: 1 }
+    { collapsed: true, order: LEVA_SORT_ORDER.CAMERA }
   )
 
   // LIGHTING DEBUG
@@ -242,7 +253,7 @@ const Experience = () => {
       ),
     },
 
-    { collapsed: true, order: 2 }
+    { collapsed: true, order: LEVA_SORT_ORDER.LIGHTING }
   )
 
   // PHYSICS DEBUG
@@ -255,32 +266,63 @@ const Experience = () => {
       }
     },
 
-    { collapsed: true, order: 3 }
+    { collapsed: true, order: LEVA_SORT_ORDER.PHYSICS }
   )
 
   // ROOM / LEVEL ANIMATION DEBUG
-  useControls(
-    'dungeon room',
+  const controls_dungeon = useControls(
+    'dungeon',
 
     {
-      'entire room': folder(
+      'floor': folder(
         {
-          level_select: {
-            label: 'level',
+          floor_select: {
+            label: 'floor select',
             value: 1,
             min: 1,
             max: 30,
             step: 1,
           },
+          'build floor': button(() => {
+            // create new random floor based on template
+            console.log('create new floor')
+          }),
+          'show floor info': button(() => {
+            console.log('show floor debug info')
+          })
+        },
+        { collapsed: true }
+      ),
+
+      'room': folder(
+        {
           room_select: {
-            label: 'room',
+            label: 'room select',
             value: 1,
             min: 1,
             max: 16,
             step: 1,
+
+            onChange: value => {
+              setLevaDungeonInfo({
+                ...leva_dungeon_info,
+                room_select: value
+              })
+            }
           },
           'build room': button(() => {
-            console.log('show/hide room')
+            console.log('show room: ', leva_dungeon_info.room_select)
+
+            if (level) {
+              console.log(level)
+              console.log(level.rooms[leva_dungeon_info.room_select - 1])
+
+              // STOPPED HERE
+
+              // a) if block is not a room, clear the room
+              // b) if block is a room, clear the room > wait > build the room
+              // -- stagger animations, also show console.log() debug info
+            }
           }),
         },
         { collapsed: true }
@@ -290,11 +332,9 @@ const Experience = () => {
         {
           'walls - show/hide': button(() => {
             console.log('show/hide walls')
-          }),
 
-          'sign - show/hide': button(() => {
-            setAnimationSign({
-              ...animation_sign,
+            setAnimationWalls({
+              ...animation_walls,
               animate: true
             })
           }),
@@ -306,7 +346,32 @@ const Experience = () => {
             })
           }),
 
-          'd20 player': folder(
+          'monster sign': folder(
+            {
+              monster_select: {
+                label: 'monster',
+                value: animation_sign.monster,
+                options: MONSTERS,
+
+                onChange: value => {
+                  setAnimationSign({
+                    ...animation_sign,
+                    monster: value
+                  })
+                }
+              },
+
+              'sign - show/hide': button(() => {
+                setAnimationSign({
+                  ...animation_sign,
+                  animate: true
+                })
+              })
+            },
+            { collapsed: true }
+          ),
+
+          'player d20': folder(
             {
               d20_player_enable: {
                 label: 'show dice',
@@ -329,9 +394,12 @@ const Experience = () => {
       ),
     },
 
-    { collapsed: true, order: 4 },
+    { collapsed: true, order: LEVA_SORT_ORDER.DUNGEON },
 
-    [d20_player_enabled] // dependency array (required for enabling 'roll' button)
+    // leva dependency array
+    //  d20_player_enabled - allows disabling 'roll' button when d20 isn't visible
+    // leva_dungeon_info - allows selecting dungeon floor/room and using that info in leva buttons (maybe a better way?)
+    [d20_player_enabled, leva_dungeon_info]
   )
 
 
@@ -359,12 +427,6 @@ const Experience = () => {
   //   ref_orbit_controls.current.target.set(0, 0, 0)
   //   ref_orbit_controls.current.update()
   // }, [])
-
-
-  if (level) {
-    console.log(level)
-  }
-
 
   return <>
 
@@ -432,9 +494,10 @@ const Experience = () => {
       <Room
         receiveShadow
         ref_orbit_controls={ref_orbit_controls}
+        animation_props={animation_walls}
       />
     </Physics>
   </>
-}
+})
 
 export default Experience

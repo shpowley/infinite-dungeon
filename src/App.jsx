@@ -4,7 +4,7 @@ import { Leva, useControls } from "leva"
 
 import Experience from "./Experience"
 import { parameterEnabled } from "./common/Utils"
-import { CAMERA_DEFAULTS, TONE_MAPPING_OPTIONS } from "./common/Constants"
+import { CAMERA_DEFAULTS, LEVA_SORT_ORDER, TONE_MAPPING_OPTIONS } from "./common/Constants"
 
 const debug_enabled = parameterEnabled('DEBUG') || parameterEnabled('debug')
 
@@ -31,7 +31,7 @@ const App = () => {
       },
     },
 
-    { collapsed: true, order: 0 }
+    { collapsed: true, order: LEVA_SORT_ORDER.TONE_MAPPING }
   )
 
   return <>
