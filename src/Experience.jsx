@@ -288,7 +288,9 @@ const Experience = memo(() => {
             console.log('create new floor')
           }),
           'show floor info': button(() => {
-            console.log('show floor debug info')
+            if (level) {
+              console.log(level)
+            }
           })
         },
         { collapsed: true }
@@ -314,14 +316,65 @@ const Experience = memo(() => {
             console.log('show room: ', leva_dungeon_info.room_select)
 
             if (level) {
-              console.log(level)
               console.log(level.rooms[leva_dungeon_info.room_select - 1])
 
-              // STOPPED HERE
+              // clear sign
+              setAnimationSign({
+                ...sign_props_default,
+                animate: true,
+                visible: false
+              })
 
-              // a) if block is not a room, clear the room
-              // b) if block is a room, clear the room > wait > build the room
-              // -- stagger animations, also show console.log() debug info
+              setTimeout(() => {
+
+                // clear warrior
+                setAnimationWarrior({
+                  animate: true,
+                  visible: false
+                })
+
+                setTimeout(() => {
+
+                  // clear walls
+                  setAnimationWalls({
+                    animate: true,
+                    visible: false
+                  })
+
+                  setTimeout(() => {
+                    // construct walls
+                    setAnimationWalls({
+                      animate: true,
+                      visible: true
+                    })
+
+                    setTimeout(() => {
+                      // construct warrior
+                      setAnimationWarrior({
+                        animate: true,
+                        visible: true
+                      })
+
+                      setTimeout(() => {
+                        // construct sign
+                        setAnimationSign({
+                          ...sign_props_default,
+                          animate: true,
+                          visible: true
+                        })
+                      }, 500)
+                    }, 1500)
+                  }, 2000)
+                }, 500)
+              }, 500)
+
+              // STOPPED HERE
+              // clear room
+              // a) if block is not a room, do nothing
+              // b) if block is a room > wait > build the room based on selected room
+              // move to function
+              // add door visibility to room / each wall
+              // leva debug timing
             }
           }),
         },
@@ -331,19 +384,17 @@ const Experience = memo(() => {
       'individuals objects': folder(
         {
           'walls - show/hide': button(() => {
-            console.log('show/hide walls')
-
-            setAnimationWalls({
-              ...animation_walls,
+            setAnimationWalls(prev => ({
+              visible: !prev.visible,
               animate: true
-            })
+            }))
           }),
 
           'warrior - show/hide': button(() => {
-            setAnimationWarrior({
-              ...animation_warrior,
+            setAnimationWarrior(prev => ({
+              visible: !prev.visible,
               animate: true
-            })
+            }))
           }),
 
           'monster sign': folder(
@@ -362,10 +413,11 @@ const Experience = memo(() => {
               },
 
               'sign - show/hide': button(() => {
-                setAnimationSign({
-                  ...animation_sign,
+                setAnimationSign(prev => ({
+                  ...prev,
+                  visible: !prev.visible,
                   animate: true
-                })
+                }))
               })
             },
             { collapsed: true }

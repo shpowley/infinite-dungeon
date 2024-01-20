@@ -54,6 +54,8 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
   const warrior_animation = react_spring_y.to([0, 1], [0, 14.0])
 
   const animateWarrior = () => {
+    setIsAnimating(true)
+
     if (react_spring_y.get() === 0) {
       react_spring_y.set(0)
       react_spring_api.start({ react_spring_y: 1 })
@@ -103,15 +105,16 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
     setMeshAnimation(animation)
   }
 
+  const isWarriorVisible = () => {
+    return react_spring_y.get() === 0
+  }
+
   useEffect(() => {
     handleMeshAnimation(selected_animation)
   }, [selected_animation])
 
   useEffect(() => {
-    // console.log('animation_props.animate', animation_props.animate)
-    // console.log('is_animating', is_animating)
-
-    if (animation_props.animate && !is_animating) {
+    if (animation_props.animate && animation_props.visible !== isWarriorVisible() && !is_animating) {
       animateWarrior()
     }
   }, [animation_props])
@@ -136,7 +139,7 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
       position-y={warrior_animation}
       position-z={position[2] + 0.2}
       rotation={rotation}
-      visible={animation_props.visible}
+      visible={isWarriorVisible()}
     >
       <primitive object={nodes._rootJoint} />
       <skinnedMesh

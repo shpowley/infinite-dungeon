@@ -105,7 +105,7 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
   // REACT SPRING - SIGN ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
     react_spring_y: animation_props.visible ? 0 : 1,
-    config: { mass: 7, tension: 600, friction: 100, precision: 0.0001 },
+    config: { mass: 7, tension: 600, friction: 100 },
 
     onRest: () => {
 
@@ -122,6 +122,8 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
   const sign_animation = react_spring_y.to([0, 1], [0, -3.0])
 
   const animateSign = () => {
+    setIsAnimating(true)
+
     if (react_spring_y.get() === 0) {
       react_spring_y.set(0)
       react_spring_api.start({ react_spring_y: 1 })
@@ -133,11 +135,16 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
     }
   }
 
+  const isSignVisible = () => {
+    return react_spring_y.get() === 0
+  }
+
   useEffect(() => {
-    if (animation_props.animate && !is_animating) {
+    if (animation_props.animate && animation_props.visible !== isSignVisible() && !is_animating) {
       animateSign()
     }
 
+    // this controls the image on the sign
     if (animation_props.monster !== controls_image.image) {
       setControlsImage({
         image: animation_props.monster,
@@ -171,7 +178,7 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
       position-z={position[2]}
       rotation={rotation}
       scale={scale}
-      visible={animation_props.visible}
+      visible={isSignVisible()}
     >
       <mesh
         castShadow={castShadow}

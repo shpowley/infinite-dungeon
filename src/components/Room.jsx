@@ -104,7 +104,7 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
 
       react_spring_api.start({
         to: { react_spring_y: 1 },
-        delay: Math.random() * Math.max(animation_props.delay, 500),
+        delay: Math.random() * Math.max(animation_props.delay, 800),
       })
     }
     else {
@@ -113,13 +113,17 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
 
       react_spring_api.start({
         to: { react_spring_y: 0 },
-        delay: Math.random() * Math.max(animation_props.delay, 500),
+        delay: Math.random() * Math.max(animation_props.delay, 800),
       })
     }
   }
 
+  const isWallVisible = () => {
+    return react_spring_y.get() === 0
+  }
+
   useEffect(() => {
-    if (animation_props.animate && !is_animating) {
+    if (animation_props.animate && animation_props.visible !== isWallVisible() && !is_animating) {
       animateWall()
     }
   }, [animation_props])
@@ -144,7 +148,7 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
       position-y={wall_animation}
       position-z={position[2]}
       rotation={rotation}
-      visible={visible && react_spring_y.get() === 0}
+      visible={visible && isWallVisible()}
     >
       <Door
         position={[0, -ROOM_EXTENTS.height, 0.35]}
@@ -290,25 +294,25 @@ const Room = ({ receiveShadow = false, ref_orbit_controls, animation_props = { .
 
   useEffect(() => {
     if (animation_props.animate) {
-      setAnimationPropsNorth(prev => ({
-        ...prev,
-        animate: true
-      }))
+      setAnimationPropsNorth({
+        ...animation_props_default,
+        ...animation_props
+      })
 
-      setAnimationPropsSouth(prev => ({
-        ...prev,
-        animate: true
-      }))
+      setAnimationPropsSouth({
+        ...animation_props_default,
+        ...animation_props
+      })
 
-      setAnimationPropsEast(prev => ({
-        ...prev,
-        animate: true
-      }))
+      setAnimationPropsEast({
+        ...animation_props_default,
+        ...animation_props
+      })
 
-      setAnimationPropsWest(prev => ({
-        ...prev,
-        animate: true
-      }))
+      setAnimationPropsWest({
+        ...animation_props_default,
+        ...animation_props
+      })
     }
   }, [animation_props])
 
