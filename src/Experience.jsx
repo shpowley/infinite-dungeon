@@ -12,7 +12,6 @@ import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
 import Warrior from './components/Warrior'
 import Sign from './components/Sign'
 import { generateLevel } from './common/Level'
-import { MONSTERS } from './common/Monsters'
 
 const TIMING = {
   CLEAR_SIGN: 500,
@@ -36,7 +35,8 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
   Perf = (await import('r3f-perf')).Perf
 }
 
-let level = generateLevel()
+// let level = generateLevel()
+let level = null
 
 const Experience = () => {
   const
@@ -329,6 +329,11 @@ const Experience = () => {
         { collapsed: true }
       ),
 
+      'start new game': button(() => {
+        level = generateLevel()
+        animateRoom(level.room_start.index)
+      }),
+
       'roll dice': button(
         () => { ref_d20.current.rollD20() },
         { disabled: !d20_player_enabled }
@@ -367,78 +372,134 @@ const Experience = () => {
 
     const room = level.rooms[room_number]
 
-    // clear dice
-    setD20PlayerEnabled(false)
+    let
+      delay = 0,
+      delay_triggered = false
 
-    setTimeout(() => {
+    if (!room.is_room) {
+      console.warn('SELECTED BLOCK IS NOT A ROOM')
+    }
+
+    // --- DECONSTRUCTION PHASE ---
+    if (
+      d20_player_enabled ||
+      animation_room.visible ||
+      animation_warrior.visible ||
+      animation_sign.visible
+    ) {
+      // clear dice
+      if (d20_player_enabled) {
+        setD20PlayerEnabled(false)
+        delay_triggered = true
+      }
+
       // clear sign
-      setAnimationSign({
-        ...sign_props_default,
-        animate: true,
-        visible: false
-      })
-
-      setTimeout(() => {
-        // clear warrior
-        setAnimationWarrior({
-          animate: true,
-          visible: false
-        })
+      if (animation_sign.visible) {
+        if (delay_triggered) {
+          delay += TIMING.CLEAR_SIGN
+        }
 
         setTimeout(() => {
-          // clear walls
+          setAnimationSign({
+            ...sign_props_default,
+            animate: true,
+            visible: false
+          })
+        }, delay)
+
+        delay_triggered = true
+      }
+
+      // clear warrior
+      if (animation_warrior.visible) {
+        if (delay_triggered) {
+          delay += TIMING.CLEAR_WARRIOR
+        }
+
+        setTimeout(() => {
+          if (animation_warrior.visible) {
+            setAnimationWarrior({
+              animate: true,
+              visible: false
+            })
+          }
+        }, delay)
+
+        delay_triggered = true
+      }
+
+      // clear walls
+      if (animation_room.visible) {
+        if (delay_triggered) {
+          delay += TIMING.CLEAR_ROOM
+        }
+
+        setTimeout(() => {
           setAnimationRoom({
             ...ROOM_ANIMATION_DEFAULTS,
             animate: true,
             visible: false
           })
+        }, delay)
 
-          if (room.is_room) {
-            setTimeout(() => {
-              // construct walls
-              setAnimationRoom({
-                animate: true,
-                visible: true,
-                delay: 0,
+        delay_triggered = true
+      }
+    }
 
-                doors: {
-                  N: room.doors?.N ?? false,
-                  S: room.doors?.S ?? false,
-                  E: room.doors?.E ?? false,
-                  W: room.doors?.W ?? false,
-                }
-              })
+    // --- CONSTRUCTION PHASE ---
+    if (room.is_room) {
 
-              setTimeout(() => {
-                // construct warrior
-                setAnimationWarrior({
-                  animate: true,
-                  visible: true
-                })
+      // construct walls
+      if (delay_triggered) {
+        delay += TIMING.BUILD_ROOM
+      }
 
-                if (room.monster) {
-                  setTimeout(() => {
-                    // construct sign
-                    setAnimationSign({
-                      animate: true,
-                      visible: true,
-                      monster: room.monster
-                    })
+      setTimeout(() => {
+        setAnimationRoom({
+          animate: true,
+          visible: true,
+          delay: 0,
 
-                    // show dice
-                    setTimeout(() => {
-                      setD20PlayerEnabled(() => true)
-                    }, TIMING.BUILD_DICE)
-                  }, TIMING.BUILD_SIGN)
-                }
-
-              }, TIMING.BUILD_WARRIOR)
-            }, TIMING.BUILD_ROOM)
+          doors: {
+            N: room.doors?.N ?? false,
+            S: room.doors?.S ?? false,
+            E: room.doors?.E ?? false,
+            W: room.doors?.W ?? false,
           }
+        })
+      }, delay)
 
-        }, TIMING.CLEAR_ROOM)
-      }, TIMING.CLEAR_WARRIOR)
-    }, TIMING.CLEAR_SIGN)
+      // construct warrior
+      delay += TIMING.BUILD_WARRIOR
+
+      setTimeout(() => {
+        setAnimationWarrior({
+          animate: true,
+          visible: true
+        })
+      }, delay)
+
+      if (room.monster) {
+
+        // construct sign
+        delay += TIMING.BUILD_SIGN
+
+        setTimeout(() => {
+          setAnimationSign({
+            animate: true,
+            visible: true,
+            monster: room.monster
+          })
+        }, delay)
+
+        // show dice
+        delay += TIMING.BUILD_DICE
+
+        setTimeout(() => {
+          setD20PlayerEnabled(() => true)
+        }, delay)
+      }
+    }
   }
 
   // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
