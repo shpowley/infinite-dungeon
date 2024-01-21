@@ -42,6 +42,9 @@ const D20 = memo(({ castShadow = false, position, enabled = false, roll = false 
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
 
+  console.log('D20 enabled: ', enabled)
+  console.log('D20 roll: ', roll)
+
   const { nodes, materials } = useGLTF(FILE_PXLMESH_LOGO)
 
   const

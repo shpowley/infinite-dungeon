@@ -4,7 +4,6 @@ import { CuboidCollider, RigidBody } from "@react-three/rapier"
 import { useSpring, animated } from '@react-spring/three'
 
 import Door from './Door'
-import { button, useControls } from 'leva'
 import { ANIMATION_DEFAULTS } from '../common/Constants'
 
 const THICKNESS_EXTENT = 0.3
@@ -41,10 +40,22 @@ const
 
 let room_receive_shadow = false
 
+const WALL_ANIMATION_DEFAULTS = {
+  ...ANIMATION_DEFAULTS,
+  door_visible: false,
+  delay: 0
+}
+
 const ROOM_ANIMATION_DEFAULTS = {
   ...ANIMATION_DEFAULTS,
   delay: 0,
-  friction: 90
+
+  doors: {
+    N: false,
+    S: false,
+    E: false,
+    W: false
+  }
 }
 
 /**
@@ -66,28 +77,31 @@ const ROOM_ANIMATION_DEFAULTS = {
  *    triggers wall animation
  *
  *  visible:
- *    true = initial wall position / visibility in view
- *    false = initial wall position / visibility above the ground plane (out of view)
+ *    react-spring animation visibility
+ *
+ *  door_visible:
+ *   whether or not the door is visible
  *
  *  delay:
  *    the delay of the wall animation (react-spring)
- *
- *  friction:
- *    the friction of the wall animation (react-spring)
  */
-const Wall = memo(({ position, rotation, visible = true, animation_props = { ...ROOM_ANIMATION_DEFAULTS } }) => {
-  const ref_mesh_group = useRef()
+const Wall = memo(({ position, rotation, visible = true, animation_props = { ...WALL_ANIMATION_DEFAULTS } }) => {
+  const
+    ref_mesh_group = useRef(),
+    ref_mesh_door = useRef()
+
   const [is_animating, setIsAnimating] = useState(false)
 
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
     react_spring_y: animation_props.visible ? 0 : 1,
-    config: { mass: 6, tension: 400, friction: animation_props.friction },
+    config: { mass: 6, tension: 400, friction: animation_props.friction ?? 90 },
 
     onRest: () => {
 
       // hide the wall when it's above the ground plane
       if (react_spring_y.get() === 1) {
         ref_mesh_group.current.visible = false
+        ref_mesh_door.current.visible = false
       }
 
       setIsAnimating(false)
@@ -109,6 +123,7 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
     }
     else {
       ref_mesh_group.current.visible = visible
+      ref_mesh_door.current.visible = animation_props.door_visible
       react_spring_y.set(1)
 
       react_spring_api.start({
@@ -151,6 +166,7 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
       visible={visible && isWallVisible()}
     >
       <Door
+        inner_ref={ref_mesh_door}
         position={[0, -ROOM_EXTENTS.height, 0.35]}
         scale={[1.5, 1.5, 1.5]}
       />
@@ -202,29 +218,39 @@ const Ceiling = memo(() => {
   </RigidBody>
 })
 
-const Room = ({ receiveShadow = false, ref_orbit_controls, animation_props = { ...ANIMATION_DEFAULTS } }) => {
+const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props = { ...ROOM_ANIMATION_DEFAULTS } }) => {
   let camera = null
-
-  const animation_props_default = {
-    ...ROOM_ANIMATION_DEFAULTS,
-    ...animation_props
-  }
 
   const
 
     // wall visibility based on camera angle
     [walls_hidden, setWallsHidden] = useState({
       NORTH: false,
-      SOUTH: true,
+      SOUTH: true, // camera starts on the south wall
       EAST: false,
       WEST: false
     }),
 
     // individual wall animation properties
-    [animation_props_north, setAnimationPropsNorth] = useState(animation_props_default),
-    [animation_props_south, setAnimationPropsSouth] = useState(animation_props_default),
-    [animation_props_east, setAnimationPropsEast] = useState(animation_props_default),
-    [animation_props_west, setAnimationPropsWest] = useState(animation_props_default)
+    [animation_props_north, setAnimationPropsNorth] = useState({
+      ...WALL_ANIMATION_DEFAULTS,
+      door_visible: animation_props.doors.N
+    }),
+
+    [animation_props_south, setAnimationPropsSouth] = useState({
+      ...WALL_ANIMATION_DEFAULTS,
+      door_visible: animation_props.doors.S
+    }),
+
+    [animation_props_east, setAnimationPropsEast] = useState({
+      ...WALL_ANIMATION_DEFAULTS,
+      door_visible: animation_props.doors.E
+    }),
+
+    [animation_props_west, setAnimationPropsWest] = useState({
+      ...WALL_ANIMATION_DEFAULTS,
+      door_visible: animation_props.doors.W
+    })
 
   const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
 
@@ -295,23 +321,31 @@ const Room = ({ receiveShadow = false, ref_orbit_controls, animation_props = { .
   useEffect(() => {
     if (animation_props.animate) {
       setAnimationPropsNorth({
-        ...animation_props_default,
-        ...animation_props
+        animate: animation_props.animate,
+        visible: animation_props.visible,
+        delay: animation_props.delay,
+        door_visible: animation_props.doors.N
       })
 
       setAnimationPropsSouth({
-        ...animation_props_default,
-        ...animation_props
+        animate: animation_props.animate,
+        visible: animation_props.visible,
+        delay: animation_props.delay,
+        door_visible: animation_props.doors.S
       })
 
       setAnimationPropsEast({
-        ...animation_props_default,
-        ...animation_props
+        animate: animation_props.animate,
+        visible: animation_props.visible,
+        delay: animation_props.delay,
+        door_visible: animation_props.doors.E
       })
 
       setAnimationPropsWest({
-        ...animation_props_default,
-        ...animation_props
+        animate: animation_props.animate,
+        visible: animation_props.visible,
+        delay: animation_props.delay,
+        door_visible: animation_props.doors.W
       })
     }
   }, [animation_props])
@@ -351,6 +385,7 @@ const Room = ({ receiveShadow = false, ref_orbit_controls, animation_props = { .
     <Ceiling />
     <Floor />
   </>
-}
+})
 
+export { ROOM_ANIMATION_DEFAULTS }
 export default Room

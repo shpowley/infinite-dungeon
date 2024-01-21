@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import {  memo, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useGLTF, useTexture } from '@react-three/drei'
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
@@ -45,7 +45,7 @@ const SignMaterial = ({ material, texture_url, x, y, scale }) => {
   />
 }
 
-const Sign = memo(({ castShadow = false, position, rotation, scale, animation_props = {...ANIMATION_DEFAULTS} }) => {
+const Sign = memo(({ castShadow = false, position, rotation, scale, animation_props = { ...ANIMATION_DEFAULTS } }) => {
   const ref_mesh_group = useRef()
 
   const { nodes, materials } = useGLTF(FILE_SIGN)

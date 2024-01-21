@@ -6,8 +6,9 @@ const LEVA_SORT_ORDER = {
   LIGHTING: 2,
   PHYSICS: 3,
   DUNGEON: 4,
-  SIGN: 5,
-  WARRIOR: 6
+  DICE: 5,
+  SIGN: 6,
+  WARRIOR: 7
 }
 
 const TONE_MAPPING_OPTIONS = {

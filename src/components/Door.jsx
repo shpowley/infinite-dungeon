@@ -8,8 +8,14 @@ const Door = (props) => {
   const { nodes, materials } = useGLTF(FILE_DOOR)
 
   return (
-    <group {...props}>
-      <mesh geometry={nodes.door.geometry} material={materials.material_2} />
+    <group
+      {...props}
+      ref={props.inner_ref}
+    >
+      <mesh
+        geometry={nodes.door.geometry}
+        material={materials.material_2}
+      />
     </group>
   )
 }

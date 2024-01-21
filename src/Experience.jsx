@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, useHelper } from '@react-three/drei'
@@ -8,11 +8,21 @@ import { button, folder, useControls } from "leva"
 import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
-import Room from './components/Room'
+import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
 import Warrior from './components/Warrior'
 import Sign from './components/Sign'
 import { generateLevel } from './common/Level'
 import { MONSTERS } from './common/Monsters'
+
+const TIMING = {
+  CLEAR_SIGN: 500,
+  CLEAR_WARRIOR: 500,
+  CLEAR_ROOM: 500,
+  BUILD_ROOM: 2000,
+  BUILD_WARRIOR: 1500,
+  BUILD_SIGN: 500,
+  BUILD_DICE: 700
+}
 
 const sign_props_default = {
   ...ANIMATION_DEFAULTS,
@@ -28,14 +38,14 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
 
 let level = generateLevel()
 
-const Experience = memo(() => {
+const Experience = () => {
   const
     ref_orbit_controls = useRef(),
     ref_light = useRef(),
     ref_shadow_camera = useRef()
 
   const
-    [animation_walls, setAnimationWalls] = useState(ANIMATION_DEFAULTS),
+    [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(sign_props_default),
     [d20_player_enabled, setD20PlayerEnabled] = useState(false),
@@ -300,9 +310,9 @@ const Experience = memo(() => {
         {
           room_select: {
             label: 'room select',
-            value: 1,
-            min: 1,
-            max: 16,
+            value: 0,
+            min: 0,
+            max: 15,
             step: 1,
 
             onChange: value => {
@@ -313,69 +323,7 @@ const Experience = memo(() => {
             }
           },
           'build room': button(() => {
-            console.log('show room: ', leva_dungeon_info.room_select)
-
-            if (level) {
-              console.log(level.rooms[leva_dungeon_info.room_select - 1])
-
-              // clear sign
-              setAnimationSign({
-                ...sign_props_default,
-                animate: true,
-                visible: false
-              })
-
-              setTimeout(() => {
-
-                // clear warrior
-                setAnimationWarrior({
-                  animate: true,
-                  visible: false
-                })
-
-                setTimeout(() => {
-
-                  // clear walls
-                  setAnimationWalls({
-                    animate: true,
-                    visible: false
-                  })
-
-                  setTimeout(() => {
-                    // construct walls
-                    setAnimationWalls({
-                      animate: true,
-                      visible: true
-                    })
-
-                    setTimeout(() => {
-                      // construct warrior
-                      setAnimationWarrior({
-                        animate: true,
-                        visible: true
-                      })
-
-                      setTimeout(() => {
-                        // construct sign
-                        setAnimationSign({
-                          ...sign_props_default,
-                          animate: true,
-                          visible: true
-                        })
-                      }, 500)
-                    }, 1500)
-                  }, 2000)
-                }, 500)
-              }, 500)
-
-              // STOPPED HERE
-              // clear room
-              // a) if block is not a room, do nothing
-              // b) if block is a room > wait > build the room based on selected room
-              // move to function
-              // add door visibility to room / each wall
-              // leva debug timing
-            }
+            animateRoom(leva_dungeon_info.room_select)
           }),
         },
         { collapsed: true }
@@ -384,7 +332,8 @@ const Experience = memo(() => {
       'individuals objects': folder(
         {
           'walls - show/hide': button(() => {
-            setAnimationWalls(prev => ({
+            setAnimationRoom(prev => ({
+              ...prev,
               visible: !prev.visible,
               animate: true
             }))
@@ -433,7 +382,6 @@ const Experience = memo(() => {
 
               'roll player d20': button(
                 () => {
-                  console.log('show/hide red d20')
                   setD20PlayerRoll(true)
                 },
                 { disabled: !d20_player_enabled }
@@ -450,9 +398,27 @@ const Experience = memo(() => {
 
     // leva dependency array
     //  d20_player_enabled - allows disabling 'roll' button when d20 isn't visible
-    // leva_dungeon_info - allows selecting dungeon floor/room and using that info in leva buttons (maybe a better way?)
+    //  leva_dungeon_info - allows selecting dungeon floor/room and using that info in leva buttons (maybe a better way?)
     [d20_player_enabled, leva_dungeon_info]
+    // [leva_dungeon_info]
   )
+
+  // useControls(
+  //   'dice',
+
+  //   {
+  //     'roll player d20': button(
+  //       () => {
+  //         setD20PlayerRoll(true)
+  //       },
+  //       { disabled: !d20_player_enabled }
+  //     )
+  //   },
+
+  //   { collapsed: true, order: LEVA_SORT_ORDER.DICE },
+
+  //   [d20_player_enabled]
+  // )
 
 
   /**
@@ -464,6 +430,100 @@ const Experience = memo(() => {
     THREE.CameraHelper
   )
 
+
+  /**
+   * DUNGEON
+   */
+  const animateRoom = (room_number) => {
+    if (!level) {
+      console.warn('NO LEVEL DATA')
+      return
+    }
+
+    console.log('LEVEL', level)
+    console.log('ROOM DATA', level.rooms[room_number])
+
+    const room = level.rooms[room_number]
+
+    // clear dice
+    setD20PlayerEnabled(false)
+
+    setTimeout(() => {
+      // clear sign
+      setAnimationSign({
+        ...sign_props_default,
+        animate: true,
+        visible: false
+      })
+
+      setTimeout(() => {
+        // clear warrior
+        setAnimationWarrior({
+          animate: true,
+          visible: false
+        })
+
+        setTimeout(() => {
+          // clear walls
+          setAnimationRoom({
+            ...ROOM_ANIMATION_DEFAULTS,
+            animate: true,
+            visible: false
+          })
+
+          if (room.is_room) {
+            setTimeout(() => {
+              // construct walls
+              setAnimationRoom({
+                animate: true,
+                visible: true,
+                delay: 0,
+
+                doors: {
+                  N: room.doors?.N ?? false,
+                  S: room.doors?.S ?? false,
+                  E: room.doors?.E ?? false,
+                  W: room.doors?.W ?? false,
+                }
+              })
+
+              setTimeout(() => {
+                // construct warrior
+                setAnimationWarrior({
+                  animate: true,
+                  visible: true
+                })
+
+                if (room.monster) {
+                  setTimeout(() => {
+                    // construct sign
+                    setAnimationSign({
+                      animate: true,
+                      visible: true,
+                      monster: room.monster
+                    })
+
+                    // show dice
+                    setTimeout(() => {
+                      setD20PlayerEnabled(() => true)
+                    }, TIMING.BUILD_DICE)
+                  }, TIMING.BUILD_SIGN)
+                }
+
+              }, TIMING.BUILD_WARRIOR)
+            }, TIMING.BUILD_ROOM)
+          }
+
+        }, TIMING.CLEAR_ROOM)
+      }, TIMING.CLEAR_WARRIOR)
+    }, TIMING.CLEAR_SIGN)
+
+
+    // STOPPED HERE
+    // clear room
+    // a) if block is not a room, do nothing
+    // b) if block is a room > wait > build the room based on selected room
+  }
 
   // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
   // save the initial position and rotation of the d20
@@ -546,10 +606,10 @@ const Experience = memo(() => {
       <Room
         receiveShadow
         ref_orbit_controls={ref_orbit_controls}
-        animation_props={animation_walls}
+        animation_props={animation_room}
       />
     </Physics>
   </>
-})
+}
 
 export default Experience
