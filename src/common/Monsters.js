@@ -2,7 +2,6 @@ const MONSTER_IMAGE_PATH = './images/monsters/'
 
 const MONSTERS = {
   BLUE_SLIME: {
-    key: 'BLUE_SLIME',
     label: 'Blue Slime',
     path: MONSTER_IMAGE_PATH + 'blue-slime.webp',
     scale: 1.15,
@@ -13,7 +12,6 @@ const MONSTERS = {
   },
 
   DEATH_KNIGHT: {
-    key: 'DEATH_KNIGHT',
     label: 'Death Knight',
     path: MONSTER_IMAGE_PATH + 'death-knight.webp',
     scale: 1.5,
@@ -24,7 +22,6 @@ const MONSTERS = {
   },
 
   GIANT_RAT: {
-    key: 'GIANT_RAT',
     label: 'Giant Rat',
     path: MONSTER_IMAGE_PATH + 'giant-rat.webp',
     x: -80,
@@ -34,7 +31,6 @@ const MONSTERS = {
   },
 
   GOBLIN: {
-    key: 'GOBLIN',
     label: 'Goblin',
     path: MONSTER_IMAGE_PATH + 'goblin.webp',
     scale: 1.1,
@@ -45,7 +41,6 @@ const MONSTERS = {
   },
 
   GREEN_SLIME: {
-    key: 'GREEN_SLIME',
     label: 'Green Slime',
     path: MONSTER_IMAGE_PATH + 'green-slime.webp',
     scale: 1.2,
@@ -56,7 +51,6 @@ const MONSTERS = {
   },
 
   GRIM_REAPER: {
-    key: 'GRIM_REAPER',
     label: 'Grim Reaper',
     path: MONSTER_IMAGE_PATH + 'grim-reaper.webp',
     scale: 1.2,
@@ -67,7 +61,6 @@ const MONSTERS = {
   },
 
   HOBGOBLIN: {
-    key: 'HOBGOBLIN',
     label: 'Hobgoblin',
     path: MONSTER_IMAGE_PATH + 'hobgoblin.webp',
     scale: 1.1,
@@ -78,7 +71,6 @@ const MONSTERS = {
   },
 
   KOBOLD: {
-    key: 'KOBOLD',
     label: 'Kobold',
     path: MONSTER_IMAGE_PATH + 'kobold.webp',
     scale: 1.4,
@@ -89,7 +81,6 @@ const MONSTERS = {
   },
 
   LIZARDMAN: {
-    key: 'LIZARDMAN',
     label: 'Lizardman',
     path: MONSTER_IMAGE_PATH + 'lizard-man.webp',
     scale: 1.05,
@@ -100,7 +91,6 @@ const MONSTERS = {
   },
 
   MIMIC: {
-    key: 'MIMIC',
     label: 'Mimic',
     path: MONSTER_IMAGE_PATH + 'mimic.webp',
     scale: 1.25,
@@ -111,7 +101,6 @@ const MONSTERS = {
   },
 
   MINOTAUR: {
-    key: 'MINOTAUR',
     label: 'Minotaur',
     path: MONSTER_IMAGE_PATH + 'minotaur.webp',
     scale: 1.35,
@@ -122,7 +111,6 @@ const MONSTERS = {
   },
 
   ORC: {
-    key: 'ORC',
     label: 'Orc',
     path: MONSTER_IMAGE_PATH + 'orc.webp',
     scale: 1.1,
@@ -133,7 +121,6 @@ const MONSTERS = {
   },
 
   PYTHON: {
-    key: 'PYTHON',
     label: 'Python',
     path: MONSTER_IMAGE_PATH + 'python.webp',
     scale: 1.2,
@@ -144,7 +131,6 @@ const MONSTERS = {
   },
 
   RAT: {
-    key: 'RAT',
     label: 'Rat',
     path: MONSTER_IMAGE_PATH + 'rat.webp',
     x: -80,
@@ -154,7 +140,6 @@ const MONSTERS = {
   },
 
   SKELETON: {
-    key: 'SKELETON',
     label: 'Skeleton',
     path: MONSTER_IMAGE_PATH + 'skeleton.webp',
     scale: 1.05,
@@ -165,7 +150,6 @@ const MONSTERS = {
   },
 
   SLIME_SKULL: {
-    key: 'SLIME_SKULL',
     label: 'Slime Skull',
     path: MONSTER_IMAGE_PATH + 'slime-skull.webp',
     scale: 1.2,
@@ -176,7 +160,6 @@ const MONSTERS = {
   },
 
   SLIME_ZOMBIE: {
-    key: 'SLIME_ZOMBIE',
     label: 'Slime Zombie',
     path: MONSTER_IMAGE_PATH + 'slime-zombie.webp',
     scale: 1.15,
@@ -187,7 +170,6 @@ const MONSTERS = {
   },
 
   SPIDER: {
-    key: 'SPIDER',
     label: 'Spider',
     path: MONSTER_IMAGE_PATH + 'spider.webp',
     scale: 1.2,
@@ -198,7 +180,6 @@ const MONSTERS = {
   },
 
   TIGER_SPIDER: {
-    key: 'TIGER_SPIDER',
     label: 'Tiger Spider',
     path: MONSTER_IMAGE_PATH + 'tiger-spider.webp',
     scale: 1.2,
@@ -209,7 +190,6 @@ const MONSTERS = {
   },
 
   WERERAT: {
-    key: 'WERERAT',
     label: 'Wererat',
     path: MONSTER_IMAGE_PATH + 'were-rat.webp',
     scale: 1.1,

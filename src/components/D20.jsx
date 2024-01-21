@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import { RigidBody } from '@react-three/rapier'
@@ -37,13 +37,10 @@ let dice_roll_value = null
 
 useGLTF.preload(FILE_PXLMESH_LOGO)
 
-const D20 = memo(({ castShadow = false, position, enabled = false, roll = false }) => {
+const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref }) => {
   const
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
-
-  console.log('D20 enabled: ', enabled)
-  console.log('D20 roll: ', roll)
 
   const { nodes, materials } = useGLTF(FILE_PXLMESH_LOGO)
 
@@ -123,11 +120,7 @@ const D20 = memo(({ castShadow = false, position, enabled = false, roll = false 
     console.log('YOU ROLLED A: ', dice_roll_value)
   }
 
-  useEffect(() => {
-    if (enabled && roll) {
-      rollD20()
-    }
-  }, [roll])
+  useImperativeHandle(inner_ref, () => ({ rollD20 }))
 
   return (
     enabled &&

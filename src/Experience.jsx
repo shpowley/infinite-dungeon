@@ -42,14 +42,14 @@ const Experience = () => {
   const
     ref_orbit_controls = useRef(),
     ref_light = useRef(),
-    ref_shadow_camera = useRef()
+    ref_shadow_camera = useRef(),
+    ref_d20 = useRef()
 
   const
     [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(sign_props_default),
     [d20_player_enabled, setD20PlayerEnabled] = useState(false),
-    [d20_player_roll, setD20PlayerRoll] = useState(false),
 
     [leva_dungeon_info, setLevaDungeonInfo] = useState({
       floor_select: 1,
@@ -280,7 +280,7 @@ const Experience = () => {
   )
 
   // ROOM / LEVEL ANIMATION DEBUG
-  const controls_dungeon = useControls(
+  useControls(
     'dungeon',
 
     {
@@ -329,96 +329,18 @@ const Experience = () => {
         { collapsed: true }
       ),
 
-      'individuals objects': folder(
-        {
-          'walls - show/hide': button(() => {
-            setAnimationRoom(prev => ({
-              ...prev,
-              visible: !prev.visible,
-              animate: true
-            }))
-          }),
-
-          'warrior - show/hide': button(() => {
-            setAnimationWarrior(prev => ({
-              visible: !prev.visible,
-              animate: true
-            }))
-          }),
-
-          'monster sign': folder(
-            {
-              monster_select: {
-                label: 'monster',
-                value: animation_sign.monster,
-                options: MONSTERS,
-
-                onChange: value => {
-                  setAnimationSign({
-                    ...animation_sign,
-                    monster: value
-                  })
-                }
-              },
-
-              'sign - show/hide': button(() => {
-                setAnimationSign(prev => ({
-                  ...prev,
-                  visible: !prev.visible,
-                  animate: true
-                }))
-              })
-            },
-            { collapsed: true }
-          ),
-
-          'player d20': folder(
-            {
-              d20_player_enable: {
-                label: 'show dice',
-                value: d20_player_enabled,
-                onChange: value => setD20PlayerEnabled(value)
-              },
-
-              'roll player d20': button(
-                () => {
-                  setD20PlayerRoll(true)
-                },
-                { disabled: !d20_player_enabled }
-              )
-            },
-            { collapsed: true }
-          )
-        },
-        { collapsed: true }
+      'roll dice': button(
+        () => { ref_d20.current.rollD20() },
+        { disabled: !d20_player_enabled }
       ),
     },
 
     { collapsed: true, order: LEVA_SORT_ORDER.DUNGEON },
 
     // leva dependency array
-    //  d20_player_enabled - allows disabling 'roll' button when d20 isn't visible
     //  leva_dungeon_info - allows selecting dungeon floor/room and using that info in leva buttons (maybe a better way?)
-    [d20_player_enabled, leva_dungeon_info]
-    // [leva_dungeon_info]
+    [leva_dungeon_info, d20_player_enabled]
   )
-
-  // useControls(
-  //   'dice',
-
-  //   {
-  //     'roll player d20': button(
-  //       () => {
-  //         setD20PlayerRoll(true)
-  //       },
-  //       { disabled: !d20_player_enabled }
-  //     )
-  //   },
-
-  //   { collapsed: true, order: LEVA_SORT_ORDER.DICE },
-
-  //   [d20_player_enabled]
-  // )
 
 
   /**
@@ -517,12 +439,6 @@ const Experience = () => {
         }, TIMING.CLEAR_ROOM)
       }, TIMING.CLEAR_WARRIOR)
     }, TIMING.CLEAR_SIGN)
-
-
-    // STOPPED HERE
-    // clear room
-    // a) if block is not a room, do nothing
-    // b) if block is a room > wait > build the room based on selected room
   }
 
   // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
@@ -598,9 +514,9 @@ const Experience = () => {
       />
 
       <D20
+        inner_ref={ref_d20}
         castShadow
         enabled={d20_player_enabled}
-        roll={d20_player_roll}
       />
 
       <Room
