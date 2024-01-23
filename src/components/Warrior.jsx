@@ -23,7 +23,7 @@ const MESH_ANIMATIONS = {
   RUN: 'run.f',
 }
 
-const Warrior = ({ castShadow = false, position, rotation, animation_props = { ...ANIMATION_DEFAULTS } }) => {
+const Warrior = ({ castShadow = false, position, rotation, scale, animation_props = { ...ANIMATION_DEFAULTS } }) => {
   const ref_mesh_group = useRef()
 
   const
@@ -125,16 +125,16 @@ const Warrior = ({ castShadow = false, position, rotation, animation_props = { .
       colliders={false}
     >
       <CylinderCollider
-        args={[position[1], 0.7]}
-        position={position}
+        args={[1.1, 0.9]}
+        position={[position[0], position[1] + 0.3, position[2]]}
         rotation={rotation}
       />
     </RigidBody>
 
     <animated.group
       ref={ref_mesh_group}
-      // position={[0.2, -position[1], -0.15]}
 
+      scale={scale}
       position-x={position[0]}
       position-y={warrior_animation}
       position-z={position[2] + 0.2}

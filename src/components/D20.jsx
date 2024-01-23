@@ -135,7 +135,7 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
     <RigidBody
       ref={ref_d20_body}
       colliders='hull'
-      position={position ?? [randomFloat(-2, -1), randomFloat(6, 8), 6]}
+      position={position ?? [randomFloat(-2, -0.5), randomFloat(4, 8), randomFloat(4.5, 6.5)]}
       rotation={[Math.random(), 0, Math.random()]}
       mass={1}
       restitution={0.4}

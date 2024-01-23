@@ -165,8 +165,8 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
       colliders={false}
     >
       <CuboidCollider
-        args={[0.95, position[1], 0.18]}
-        position={position}
+        args={[1.3, 1.85, 0.26]}
+        position={[position[0], position[1] + 0.55, position[2] + 0.1]}
         rotation={rotation}
       />
     </RigidBody>

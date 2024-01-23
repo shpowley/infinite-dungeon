@@ -135,7 +135,7 @@ const D20Enemy = memo(({ castShadow = false, position, enabled = false, inner_re
     <RigidBody
       ref={ref_d20_body}
       colliders='hull'
-      position={position ?? [randomFloat(1, 2), randomFloat(4, 6), 6]}
+      position={position ?? [randomFloat(0.5, 2), randomFloat(4, 8), randomFloat(4.5, 6.5)]}
       rotation={[Math.random(), 0, Math.random()]}
       mass={1}
       restitution={0.4}

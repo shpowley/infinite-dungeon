@@ -23,11 +23,11 @@ const PHASE = {
 const TIMING = {
   CLEAR_SIGN: 500,
   CLEAR_WARRIOR: 500,
-  CLEAR_ROOM: 500,
+  CLEAR_ROOM: 1000,
   BUILD_ROOM: 2000,
   BUILD_WARRIOR: 1500,
-  BUILD_SIGN: 500,
-  BUILD_DICE: 700
+  BUILD_SIGN: 1000,
+  BUILD_DICE: 1500
 }
 
 const SIGN_PROPS_DEFAULT = {
@@ -59,11 +59,12 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
 let
   active_level = null,
   active_room = null,
+  player_data = null,
   is_build_complete = false,
 
+  in_combat_roll = false,
   is_player_rolling = false,
   dice_roll_player = null,
-
   is_enemy_rolling = false,
   dice_roll_enemy = null
 
@@ -80,7 +81,6 @@ const Experience = () => {
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(SIGN_PROPS_DEFAULT),
     [dice_enabled, setDiceEnabled] = useState(false),
-    [player_info, setPlayerInfo] = useState({ ...PLAYER_INFO_DEFAULT }),
     [game_phase, setGamePhase] = useState(PHASE.STANDBY),
 
     [leva_dungeon_info, setLevaDungeonInfo] = useState({
@@ -404,11 +404,11 @@ const Experience = () => {
     active_room = active_level.rooms[room_start_index]
 
     // reset player info
-    setPlayerInfo({
+    player_data = {
       ...PLAYER_INFO_DEFAULT,
       floor_index: 1,
       room_index: room_start_index
-    })
+    }
 
     animateRoom()
   }
@@ -566,23 +566,55 @@ const Experience = () => {
   }
 
   const rollCombat = () => {
-    if (ref_d20.current) {
+    if (ref_d20.current && ref_d20_enemy.current) {
+      in_combat_roll = true
       is_player_rolling = true
+      is_enemy_rolling = true
       ref_d20.current.rollD20()
       ref_d20_enemy.current.rollD20()
     }
   }
 
+  // STOPPED HERE
   const onD20RollComplete = result => {
-    if (is_player_rolling && result) {
-      if (result.owner === DICE_OWNER.PLAYER) {
-        console.log('PLAYER ROLLED A: ', result.value)
+    if (in_combat_roll) {
+      if (is_player_rolling && result.owner === DICE_OWNER.PLAYER) {
         dice_roll_player = result.value
         is_player_rolling = false
       }
-      // else if (result.owner === DICE_OWNER.ENEMY) {
-      //   console.log('MONSTER ROLLED A: ', result.value)
-      // }
+
+      if (is_enemy_rolling && result.owner === DICE_OWNER.ENEMY) {
+        dice_roll_enemy = result.value
+        is_enemy_rolling = false
+      }
+
+      /**
+       * COMBAT:
+       *
+       *  winner = highest dice: player or monster (tie >> next roll)
+       *
+       *  damage calculation
+       *
+       *    if winning dice roll = 20 (CRITICAL HIT) >> 2x damage
+       *
+       *      [(winner dice - loser dice) + 1] / 20 (PERCENTAGE OF ATTACK DAMAGE)
+       *    x winner base attack (or CRITICAL HIT DAMAGE)
+       *    x winner health / winner max health (PERCENTAGE OF HEALTH)
+       */
+      if (!is_player_rolling && !is_enemy_rolling) {
+        console.log('COMBAT ROLL COMPLETE')
+
+        console.log('PLAYER ROLLED A: ', dice_roll_player)
+        console.log('MONSTER ROLLED A: ', dice_roll_enemy)
+
+        // TEST DATA
+        player_data.health -= 1
+        active_room.monster.health -= 1
+        console.log(`PLAYER HEALTH: ${player_data.health}`)
+        console.log(`MONSTER: ${active_room.monster.label} | HEALTH: ${active_room.monster.health}`)
+
+        in_combat_roll = false
+      }
     }
   }
 
@@ -611,6 +643,10 @@ const Experience = () => {
         break
 
       case PHASE.COMBAT:
+        console.log('COMBAT STARTED')
+        console.log(`PLAYER HEALTH: ${player_data.health}`)
+        console.log(`MONSTER: ${active_room.monster.label} | HEALTH: ${active_room.monster.health}`)
+
         // show keyboard controls
         // - highlight combat / roll dice key
         // - disable direction keys
@@ -732,12 +768,13 @@ const Experience = () => {
         position={[1.5, 0.8, 1.5]}
         rotation={[0, -Math.PI * 0.75, 0]}
         animation_props={animation_warrior}
+        scale={[1.3, 1.3, 1.3]}
       />
 
       <Sign
         castShadow
         position={[-1, 1.3, -1]}
-        scale={[1.4, 1.4, 1.4]}
+        scale={[2.0, 2.0, 2.0]}
         rotation={[0, Math.PI * 0.25, 0]}
         animation_props={animation_sign}
       />
