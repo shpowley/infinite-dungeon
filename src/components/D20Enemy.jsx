@@ -31,14 +31,14 @@ const FACE_ID_LOOKUP = {
 }
 
 const
-  FILE_DICE_MODEL = './models/d20-compressed.glb',
+  FILE_DICE_MODEL = './models/d20-obsidian-compressed.glb',
   FILE_SOUND_HIT = './sounds/hit.mp3'
 
 let dice_roll_value = null
 
 useGLTF.preload(FILE_DICE_MODEL)
 
-const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, onRollComplete }) => {
+const D20Enemy = memo(({ castShadow = false, position, enabled = false, inner_ref, onRollComplete }) => {
   const
     ref_d20_body = useRef(),
     ref_d20_mesh = useRef()
@@ -123,7 +123,7 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
     if (onRollComplete && typeof onRollComplete === 'function') {
       onRollComplete({
         value: dice_roll_value,
-        owner: DICE_OWNER.PLAYER
+        owner: DICE_OWNER.ENEMY
       })
     }
   }
@@ -135,7 +135,7 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
     <RigidBody
       ref={ref_d20_body}
       colliders='hull'
-      position={position ?? [randomFloat(-2, -1), randomFloat(6, 8), 6]}
+      position={position ?? [randomFloat(1, 2), randomFloat(4, 6), 6]}
       rotation={[Math.random(), 0, Math.random()]}
       mass={1}
       restitution={0.4}
@@ -149,8 +149,8 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
       >
         <mesh
           castShadow={castShadow}
-          geometry={nodes.d20_red_plastic.geometry}
-          material={materials['red plastic']}
+          geometry={nodes.d20_obsidian.geometry}
+          material={materials.obsidian}
         />
       </group>
     </RigidBody>
@@ -158,4 +158,4 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
 })
 
 export { FACE_ID_LOOKUP }
-export default D20
+export default D20Enemy

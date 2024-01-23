@@ -1,10 +1,11 @@
 import * as THREE from "three"
 import { Canvas } from "@react-three/fiber"
+import { KeyboardControls } from "@react-three/drei"
 import { Leva, useControls } from "leva"
 
 import Experience from "./Experience"
 import { parameterEnabled } from "./common/Utils"
-import { CAMERA_DEFAULTS, LEVA_SORT_ORDER, TONE_MAPPING_OPTIONS } from "./common/Constants"
+import { CAMERA_DEFAULTS, KEYBOARD, LEVA_SORT_ORDER, TONE_MAPPING_OPTIONS } from "./common/Constants"
 
 const debug_enabled = parameterEnabled('DEBUG') || parameterEnabled('debug')
 
@@ -24,7 +25,7 @@ const App = () => {
 
       tone_exposure: {
         label: 'exposure',
-        value: 1.5,
+        value: 1.0,
         min: 0,
         max: 5,
         step: 0.1,
@@ -46,24 +47,34 @@ const App = () => {
       }}
     />
 
-    <Canvas
-      gl={{
-        toneMapping: controls_gl.tone_mapping,
-        toneMappingExposure: controls_gl.tone_exposure,
-        shadowMapType: THREE.BasicShadowMap
-      }}
-
-      shadows
-
-      camera={{
-        fov: CAMERA_DEFAULTS.fov,
-        near: CAMERA_DEFAULTS.near,
-        far: CAMERA_DEFAULTS.far,
-        position: CAMERA_DEFAULTS.position
-      }}
+    <KeyboardControls
+      map={[
+        { name: KEYBOARD.NORTH, keys: ['KeyW', 'ArrowUp'] },
+        { name: KEYBOARD.SOUTH, keys: ['KeyS', 'ArrowDown'] },
+        { name: KEYBOARD.EAST, keys: ['KeyD', 'ArrowRight'] },
+        { name: KEYBOARD.WEST, keys: ['KeyA', 'ArrowLeft'] },
+        { name: KEYBOARD.ROLL_DICE, keys: ['Space'] }
+      ]}
     >
-      <Experience />
-    </Canvas>
+      <Canvas
+        gl={{
+          toneMapping: controls_gl.tone_mapping,
+          toneMappingExposure: controls_gl.tone_exposure,
+          shadowMapType: THREE.BasicShadowMap
+        }}
+
+        shadows
+
+        camera={{
+          fov: CAMERA_DEFAULTS.fov,
+          near: CAMERA_DEFAULTS.near,
+          far: CAMERA_DEFAULTS.far,
+          position: CAMERA_DEFAULTS.position
+        }}
+      >
+        <Experience />
+      </Canvas>
+    </KeyboardControls>
   </>
 }
 

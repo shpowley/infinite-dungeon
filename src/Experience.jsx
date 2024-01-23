@@ -1,17 +1,24 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
-import { OrbitControls, useHelper } from '@react-three/drei'
+import { Environment, OrbitControls, useHelper, useKeyboardControls } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
-import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
 import Warrior from './components/Warrior'
 import Sign from './components/Sign'
 import { generateLevel } from './common/Level'
+import D20Enemy from './components/D20Enemy'
+
+const PHASE = {
+  STANDBY: 0,
+  MOVEMENT: 1,
+  COMBAT: 2
+}
 
 const TIMING = {
   CLEAR_SIGN: 500,
@@ -23,9 +30,23 @@ const TIMING = {
   BUILD_DICE: 700
 }
 
-const sign_props_default = {
+const SIGN_PROPS_DEFAULT = {
   ...ANIMATION_DEFAULTS,
   monster: 'NONE'
+}
+
+const PLAYER_INFO_DEFAULT = {
+  health: 100,
+  attack: 10,
+
+  floor_index: null,
+  room_index: null,
+
+  gold: 0,
+  potions: 0,
+  key: false,
+
+  kill_count: 0
 }
 
 // DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
@@ -35,21 +56,32 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
   Perf = (await import('r3f-perf')).Perf
 }
 
-// let level = generateLevel()
-let level = null
+let
+  active_level = null,
+  active_room = null,
+  is_build_complete = false,
+
+  is_player_rolling = false,
+  dice_roll_player = null,
+
+  is_enemy_rolling = false,
+  dice_roll_enemy = null
 
 const Experience = () => {
   const
     ref_orbit_controls = useRef(),
     ref_light = useRef(),
     ref_shadow_camera = useRef(),
-    ref_d20 = useRef()
+    ref_d20 = useRef(),
+    ref_d20_enemy = useRef()
 
   const
     [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
-    [animation_sign, setAnimationSign] = useState(sign_props_default),
-    [d20_player_enabled, setD20PlayerEnabled] = useState(false),
+    [animation_sign, setAnimationSign] = useState(SIGN_PROPS_DEFAULT),
+    [dice_enabled, setDiceEnabled] = useState(false),
+    [player_info, setPlayerInfo] = useState({ ...PLAYER_INFO_DEFAULT }),
+    [game_phase, setGamePhase] = useState(PHASE.STANDBY),
 
     [leva_dungeon_info, setLevaDungeonInfo] = useState({
       floor_select: 1,
@@ -134,7 +166,7 @@ const Experience = () => {
 
           ambient_color: {
             label: 'color',
-            value: '#ffffff',
+            value: '#ff8c00',
           },
         },
 
@@ -146,7 +178,7 @@ const Experience = () => {
         {
           directional_intensity: {
             label: 'intensity',
-            value: 1.5,
+            value: 1.0,
             min: 0,
             max: 10,
             step: 0.1,
@@ -160,7 +192,7 @@ const Experience = () => {
 
           directional_color: {
             label: 'color',
-            value: '#ffffff',
+            value: '#dc3a3a',
           },
         },
 
@@ -284,7 +316,7 @@ const Experience = () => {
     'dungeon',
 
     {
-      'floor': folder(
+      'floor debug': folder(
         {
           floor_select: {
             label: 'floor select',
@@ -298,15 +330,15 @@ const Experience = () => {
             console.log('create new floor')
           }),
           'show floor info': button(() => {
-            if (level) {
-              console.log(level)
+            if (active_level) {
+              console.log(active_level)
             }
           })
         },
         { collapsed: true }
       ),
 
-      'room': folder(
+      'room debug': folder(
         {
           room_select: {
             label: 'room select',
@@ -323,20 +355,18 @@ const Experience = () => {
             }
           },
           'build room': button(() => {
-            animateRoom(leva_dungeon_info.room_select)
+            active_room = active_level.rooms[leva_dungeon_info.room_select]
+            animateRoom()
           }),
         },
         { collapsed: true }
       ),
 
-      'start new game': button(() => {
-        level = generateLevel()
-        animateRoom(level.room_start.index)
-      }),
+      'start new game': button(() => newGame()),
 
       'roll dice': button(
-        () => { ref_d20.current.rollD20() },
-        { disabled: !d20_player_enabled }
+        () => rollCombat(),
+        { disabled: !dice_enabled }
       ),
     },
 
@@ -344,7 +374,7 @@ const Experience = () => {
 
     // leva dependency array
     //  leva_dungeon_info - allows selecting dungeon floor/room and using that info in leva buttons (maybe a better way?)
-    [leva_dungeon_info, d20_player_enabled]
+    [leva_dungeon_info, dice_enabled]
   )
 
 
@@ -359,37 +389,66 @@ const Experience = () => {
 
 
   /**
+   * KEYBOARD CONTROLS
+   */
+  const [sub, get] = useKeyboardControls()
+
+
+  /**
    * DUNGEON
    */
-  const animateRoom = (room_number) => {
-    if (!level) {
+  const newGame = () => {
+    active_level = generateLevel()
+
+    const room_start_index = active_level.room_start.index
+    active_room = active_level.rooms[room_start_index]
+
+    // reset player info
+    setPlayerInfo({
+      ...PLAYER_INFO_DEFAULT,
+      floor_index: 1,
+      room_index: room_start_index
+    })
+
+    animateRoom()
+  }
+
+  const animateRoom = () => {
+    if (!active_level) {
       console.warn('NO LEVEL DATA')
       return
     }
 
-    console.log('LEVEL', level)
-    console.log('ROOM DATA', level.rooms[room_number])
+    if (!active_room) {
+      console.warn('NO ROOM DATA')
+      return
+    }
 
-    const room = level.rooms[room_number]
+    // UPDATE HUD MAP INSTEAD OF CONSOLE LOG
+    console.log('LEVEL', active_level)
+    console.log('ROOM DATA', active_room)
 
     let
       delay = 0,
       delay_triggered = false
 
-    if (!room.is_room) {
+    if (!active_room.is_room) {
       console.warn('SELECTED BLOCK IS NOT A ROOM')
     }
 
+    is_build_complete = false
+    setGamePhase(PHASE.STANDBY)
+
     // --- DECONSTRUCTION PHASE ---
     if (
-      d20_player_enabled ||
+      dice_enabled ||
       animation_room.visible ||
       animation_warrior.visible ||
       animation_sign.visible
     ) {
       // clear dice
-      if (d20_player_enabled) {
-        setD20PlayerEnabled(false)
+      if (dice_enabled) {
+        setDiceEnabled(false)
         delay_triggered = true
       }
 
@@ -401,7 +460,7 @@ const Experience = () => {
 
         setTimeout(() => {
           setAnimationSign({
-            ...sign_props_default,
+            ...SIGN_PROPS_DEFAULT,
             animate: true,
             visible: false
           })
@@ -447,7 +506,7 @@ const Experience = () => {
     }
 
     // --- CONSTRUCTION PHASE ---
-    if (room.is_room) {
+    if (active_room.is_room) {
 
       // construct walls
       if (delay_triggered) {
@@ -461,10 +520,10 @@ const Experience = () => {
           delay: 0,
 
           doors: {
-            N: room.doors?.N ?? false,
-            S: room.doors?.S ?? false,
-            E: room.doors?.E ?? false,
-            W: room.doors?.W ?? false,
+            N: active_room.doors?.N ?? false,
+            S: active_room.doors?.S ?? false,
+            E: active_room.doors?.E ?? false,
+            W: active_room.doors?.W ?? false,
           }
         })
       }, delay)
@@ -479,7 +538,7 @@ const Experience = () => {
         })
       }, delay)
 
-      if (room.monster) {
+      if (active_room.monster) {
 
         // construct sign
         delay += TIMING.BUILD_SIGN
@@ -488,7 +547,7 @@ const Experience = () => {
           setAnimationSign({
             animate: true,
             visible: true,
-            monster: room.monster
+            monster: active_room.monster
           })
         }, delay)
 
@@ -496,9 +555,34 @@ const Experience = () => {
         delay += TIMING.BUILD_DICE
 
         setTimeout(() => {
-          setD20PlayerEnabled(() => true)
+          setDiceEnabled(() => true)
         }, delay)
       }
+    }
+
+    setTimeout(() => {
+      is_build_complete = true
+    }, delay)
+  }
+
+  const rollCombat = () => {
+    if (ref_d20.current) {
+      is_player_rolling = true
+      ref_d20.current.rollD20()
+      ref_d20_enemy.current.rollD20()
+    }
+  }
+
+  const onD20RollComplete = result => {
+    if (is_player_rolling && result) {
+      if (result.owner === DICE_OWNER.PLAYER) {
+        console.log('PLAYER ROLLED A: ', result.value)
+        dice_roll_player = result.value
+        is_player_rolling = false
+      }
+      // else if (result.owner === DICE_OWNER.ENEMY) {
+      //   console.log('MONSTER ROLLED A: ', result.value)
+      // }
     }
   }
 
@@ -517,9 +601,93 @@ const Experience = () => {
   //   ref_orbit_controls.current.update()
   // }, [])
 
+
+  useEffect(() => {
+    switch (game_phase) {
+      case PHASE.MOVEMENT:
+        // show keyboard controls
+        // - highlight direction keys matching available doors
+        // - disable other keys
+        break
+
+      case PHASE.COMBAT:
+        // show keyboard controls
+        // - highlight combat / roll dice key
+        // - disable direction keys
+        break
+
+      case PHASE.STANDBY:
+      default:
+      // hide keyboard controls
+    }
+
+    return sub(
+      state => state,
+
+      keys => {
+        if (game_phase === PHASE.MOVEMENT) {
+          let direction = null
+
+          if (keys.NORTH && active_room.doors.N) {
+            direction = 'N'
+          }
+
+          else if (keys.SOUTH && active_room.doors.S) {
+            direction = 'S'
+          }
+
+          else if (keys.EAST && active_room.doors.E) {
+            direction = 'E'
+          }
+
+          else if (keys.WEST && active_room.doors.W) {
+            direction = 'W'
+          }
+
+          if (direction) {
+            const next_index = active_room.adjacent_blocks.find(block => block.direction === direction).index
+            active_room = active_level.rooms[next_index]
+            animateRoom()
+          }
+        }
+
+        else if (game_phase === PHASE.COMBAT) {
+          if (keys.ROLL_DICE && dice_enabled) {
+            rollCombat()
+          }
+        }
+      }
+    )
+  }, [game_phase])
+
+  useEffect(() => {
+    if (is_build_complete) {
+      if (animation_sign.visible) {
+        setGamePhase(PHASE.COMBAT)
+      }
+      else if (
+        animation_room.visible &&
+        active_room &&
+        active_room.is_room && (
+          active_room.doors.N ||
+          active_room.doors.S ||
+          active_room.doors.E ||
+          active_room.doors.W
+        )
+      ) {
+        setGamePhase(PHASE.MOVEMENT)
+      }
+      else {
+        setGamePhase(PHASE.STANDBY)
+      }
+    }
+  }, [animation_room, animation_sign, is_build_complete])
+
   return <>
 
     {Perf && <Perf position='top-left' />}
+
+    <Environment preset='sunset' />
 
     <OrbitControls
       ref={ref_orbit_controls}
@@ -577,7 +745,15 @@ const Experience = () => {
       <D20
         inner_ref={ref_d20}
         castShadow
-        enabled={d20_player_enabled}
+        enabled={dice_enabled}
+        onRollComplete={onD20RollComplete}
+      />
+
+      <D20Enemy
+        inner_ref={ref_d20_enemy}
+        castShadow
+        enabled={dice_enabled}
+        onRollComplete={onD20RollComplete}
       />
 
       <Room
