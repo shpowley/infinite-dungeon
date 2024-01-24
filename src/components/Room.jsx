@@ -94,7 +94,7 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
 
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
     react_spring_y: animation_props.visible ? 0 : 1,
-    config: { mass: 6, tension: 400, friction: animation_props.friction ?? 90 },
+    config: { mass: 6, tension: 400, friction: animation_props.friction ?? 90, precision: 0.001},
 
     onRest: () => {
 
@@ -184,7 +184,7 @@ const Floor = memo(() => {
   return <RigidBody
     type='fixed'
     restitution={0.5}
-    friction={0}
+    friction={0.3}
     colliders={false}
   >
     <CuboidCollider

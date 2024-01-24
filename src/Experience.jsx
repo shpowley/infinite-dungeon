@@ -5,7 +5,7 @@ import { Environment, OrbitControls, useHelper, useKeyboardControls } from '@rea
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
-import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
@@ -15,9 +15,11 @@ import { generateLevel } from './common/Level'
 import D20Enemy from './components/D20Enemy'
 
 const PHASE = {
-  STANDBY: 0,
-  MOVEMENT: 1,
-  COMBAT: 2
+  GAME_START: 0,
+  GAME_OVER: 1,
+  STANDBY: 2,
+  MOVEMENT: 3,
+  COMBAT: 4
 }
 
 const TIMING = {
@@ -62,6 +64,7 @@ let
   player_data = null,
   is_build_complete = false,
 
+  dice_ready = false,
   in_combat_roll = false,
   is_player_rolling = false,
   dice_roll_player = null,
@@ -81,7 +84,7 @@ const Experience = () => {
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(SIGN_PROPS_DEFAULT),
     [dice_enabled, setDiceEnabled] = useState(false),
-    [game_phase, setGamePhase] = useState(PHASE.STANDBY),
+    [game_phase, setGamePhase] = useState(PHASE.GAME_START),
 
     [leva_dungeon_info, setLevaDungeonInfo] = useState({
       floor_select: 1,
@@ -398,7 +401,11 @@ const Experience = () => {
    * DUNGEON
    */
   const newGame = () => {
-    active_level = generateLevel()
+    active_level = generateLevel(1)
+
+    console.clear()
+    console.log('*** NEW GAME ***')
+    console.log('LEVEL', active_level)
 
     const room_start_index = active_level.room_start.index
     active_room = active_level.rooms[room_start_index]
@@ -425,8 +432,8 @@ const Experience = () => {
     }
 
     // UPDATE HUD MAP INSTEAD OF CONSOLE LOG
-    console.log('LEVEL', active_level)
     console.log('ROOM DATA', active_room)
+    console.log('PLAYER DATA', player_data)
 
     let
       delay = 0,
@@ -552,6 +559,7 @@ const Experience = () => {
         }, delay)
 
         // show dice
+        dice_ready = false
         delay += TIMING.BUILD_DICE
 
         setTimeout(() => {
@@ -570,12 +578,12 @@ const Experience = () => {
       in_combat_roll = true
       is_player_rolling = true
       is_enemy_rolling = true
+      dice_ready = false
       ref_d20.current.rollD20()
       ref_d20_enemy.current.rollD20()
     }
   }
 
-  // STOPPED HERE
   const onD20RollComplete = result => {
     if (in_combat_roll) {
       if (is_player_rolling && result.owner === DICE_OWNER.PLAYER) {
@@ -602,19 +610,123 @@ const Experience = () => {
        *    x winner health / winner max health (PERCENTAGE OF HEALTH)
        */
       if (!is_player_rolling && !is_enemy_rolling) {
-        console.log('COMBAT ROLL COMPLETE')
-
+        console.clear()
+        console.log('-- COMBAT DICE ROLL --')
         console.log('PLAYER ROLLED A: ', dice_roll_player)
         console.log('MONSTER ROLLED A: ', dice_roll_enemy)
 
-        // TEST DATA
-        player_data.health -= 1
-        active_room.monster.health -= 1
-        console.log(`PLAYER HEALTH: ${player_data.health}`)
-        console.log(`MONSTER: ${active_room.monster.label} | HEALTH: ${active_room.monster.health}`)
+        let
+          damage = 0,
+          attack = 0
+
+        // TIE - NO DAMAGE DEALT - ROLL AGAIN
+        if (dice_roll_player === dice_roll_enemy) {
+          console.log('TIE - ROLL AGAIN')
+        }
+
+        // PLAYER WINS COMBAT ROUND
+        else if (dice_roll_player > dice_roll_enemy) {
+
+          // CRITICAL HIT or BASE ATTACK
+          attack = dice_roll_player === 20 ? player_data.attack * 2 : player_data.attack
+
+          damage = Math.ceil(
+            (((dice_roll_player - dice_roll_enemy) + 1) / 20)   // DICE DIFFERENCE
+            * attack                                            // BASE ATTACK or CRITICAL HIT
+            * (player_data.health / PLAYER_INFO_DEFAULT.health) // PERCENTAGE OF HEALTH
+          )
+
+          active_room.monster.health -= damage
+
+          if (dice_roll_player === 20) {
+            console.log('CRITICAL HIT')
+          }
+
+          console.log(`PLAYER DEALS ${damage} DAMAGE TO ${active_room.monster.label}`)
+
+          if (active_room.monster.health > 0) {
+            console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
+          }
+          else {
+            console.log('MONSTER DEFEATED')
+
+            player_data.kill_count++
+
+            if (active_room.item) {
+              console.log(`PLAYER FINDS: ${active_room.item.name} - ${active_room.item.description}`)
+
+              switch (active_room.item.type) {
+                case ITEM_KEYS.HEALTH_POTION:
+                  player_data.potions++
+                  break
+
+                case ITEM_KEYS.TREASURE_CHEST:
+                  player_data.gold += active_room.item.value
+                  break
+
+                case ITEM_KEYS.KEY:
+                  console.log('PLAYER GETS KEY')
+                  player_data.key = true
+                  break
+
+                default:
+                  console.warn('NO MATCHING ITEM!!')
+              }
+
+              delete active_room.item
+
+              // UPDATE PLAYER DATA / HUD
+              console.log(player_data)
+            }
+
+            delete active_room.monster
+
+            setDiceEnabled(false)
+
+            // HIDING THE SIGN SHOULD AUTOMATICALLY TRIGGER THE STANDBY PHASE IN useEffect()
+            setTimeout(() => {
+              setAnimationSign({
+                ...SIGN_PROPS_DEFAULT,
+                animate: true,
+                visible: false
+              })
+            }, 1000)
+          }
+        }
+
+        // MONSTER WINS COMBAT ROUND
+        else {
+
+          // CRITICAL HIT or BASE ATTACK
+          attack = dice_roll_enemy === 20 ? active_room.monster.attack * 2 : active_room.monster.attack
+
+          damage = Math.ceil(
+            (((dice_roll_enemy - dice_roll_player) + 1) / 20)               // DICE DIFFERENCE
+            * attack                                                        // BASE ATTACK or CRITICAL HIT
+            * (active_room.monster.health / active_room.monster.max_health) // PERCENTAGE OF HEALTH
+          )
+
+          player_data.health -= damage
+
+          if (dice_roll_enemy === 20) {
+            console.log('CRITICAL HIT')
+          }
+
+          console.log(`${active_room.monster.label} DEALS ${damage} DAMAGE TO PLAYER`)
+          console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
+
+          if (player_data.health <= 0) {
+            console.log('PLAYER DEFEATED')
+            setGamePhase(PHASE.GAME_OVER)
+          }
+        }
 
         in_combat_roll = false
+        dice_ready = true
       }
+    }
+    else {
+      dice_ready = true
     }
   }
 
@@ -634,18 +746,28 @@ const Experience = () => {
   // }, [])
 
 
+  // KEYBOARD CONTROLS
   useEffect(() => {
     switch (game_phase) {
+      case PHASE.GAME_START:
+        console.log('*** TITLE / GAME START ***')
+        break
+
+      case PHASE.GAME_OVER:
+        console.log('*** GAME OVER ***')
+        break
+
       case PHASE.MOVEMENT:
+        console.log('*** MOVEMENT PHASE ***')
         // show keyboard controls
         // - highlight direction keys matching available doors
         // - disable other keys
         break
 
       case PHASE.COMBAT:
-        console.log('COMBAT STARTED')
-        console.log(`PLAYER HEALTH: ${player_data.health}`)
-        console.log(`MONSTER: ${active_room.monster.label} | HEALTH: ${active_room.monster.health}`)
+        console.clear()
+        console.log('*** COMBAT START PHASE ***')
+        console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
 
         // show keyboard controls
         // - highlight combat / roll dice key
@@ -681,14 +803,61 @@ const Experience = () => {
           }
 
           if (direction) {
-            const next_index = active_room.adjacent_blocks.find(block => block.direction === direction).index
-            active_room = active_level.rooms[next_index]
-            animateRoom()
+            const next_room = active_room.adjacent_blocks.find(block => block.direction === direction)
+
+            if (next_room) {
+              console.clear()
+
+              const next_index = next_room.index
+
+              // CHECK FOR KEY TO FLOOR BOSS ROOM
+              if (next_index === active_level.room_end.index) {
+                if (player_data.key) {
+                  player_data.key = false
+                  active_room = active_level.rooms[next_index]
+                  animateRoom()
+                }
+                else {
+                  console.log('YOU NEED A KEY TO OPEN THIS DOOR')
+                }
+              }
+
+              // NO KEY REQUIRED FOR OTHER ROOMS
+              else {
+                active_room = active_level.rooms[next_index]
+                animateRoom()
+              }
+            }
+
+            // UNDEFINED OR NOT AN INTEGER TO ANOTHER ROOM. IF CURRENTLY IN THE FLOOR BOSS ROOM MOVE TO NEXT FLOOR
+            else if (active_room.index === active_level.room_end.index) {
+              console.log('MOVE TO NEXT FLOOR')
+
+              player_data.floor_index++
+
+              // GENERATE NEW LEVEL BASED ON CURRENT FLOOR (1 >> 2 >> 3 >> etc.)
+              // - STARTING ROOM IS FOR THE NEXT LEVEL IS BASED ON THE CURRENT LEVEL'S ENDING ROOM
+              active_level = generateLevel(
+                player_data.floor_index,
+
+                {
+                  index: active_room.index,
+                  level_door: direction
+                }
+              )
+
+              console.clear()
+              console.log('*** NEXT LEVEL ***')
+              console.log('LEVEL', active_level)
+
+              active_room = active_level.rooms[active_level.room_start.index]
+              animateRoom()
+            }
           }
         }
 
         else if (game_phase === PHASE.COMBAT) {
-          if (keys.ROLL_DICE && dice_enabled) {
+          if (keys.ROLL_DICE && dice_enabled && dice_ready) {
             rollCombat()
           }
         }
@@ -696,6 +865,7 @@ const Experience = () => {
     )
   }, [game_phase])
 
+  // GAME PHASE
   useEffect(() => {
     if (is_build_complete) {
       if (animation_sign.visible) {

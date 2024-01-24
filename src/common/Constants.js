@@ -41,6 +41,12 @@ const KEYBOARD = {
   ROLL_DICE: 'ROLL_DICE'
 }
 
+const ITEM_KEYS = {
+  HEALTH_POTION: 0,
+  TREASURE_CHEST: 1,
+  KEY: 2
+}
+
 const DICE_OWNER = {
   PLAYER: 0,
   ENEMY: 1
@@ -52,5 +58,6 @@ export {
   ANIMATION_DEFAULTS,
   LEVA_SORT_ORDER,
   KEYBOARD,
+  ITEM_KEYS,
   DICE_OWNER
 }

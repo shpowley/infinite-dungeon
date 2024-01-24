@@ -1,20 +1,21 @@
+import { ITEM_KEYS } from "./Constants"
 import { MONSTERS } from "./Monsters"
 
 const FLOOR_ITEMS = {
   HEALTH_POTION: {
-    type: 'potion',
+    type: ITEM_KEYS.HEALTH_POTION,
     name: 'Health Potion',
     description: 'Restores 10 health points.',
     value: 10,
   },
   TREASURE_CHEST: {
-    type: 'treasure',
+    type: ITEM_KEYS.TREASURE_CHEST,
     name: 'Treasure Chest',
-    description: 'What could be inside?',
+    description: 'Treasure chest containing gold coins.',
     value: 10,
   },
   KEY: {
-    type: 'key',
+    type: ITEM_KEYS.KEY,
     name: 'Key',
     description: 'Opens floor boss room.'
   }
@@ -419,11 +420,10 @@ const createStartRoom = (level, index, prior_room) => {
   }
 
   // creat a door to a random adjacent block
-  // generateDoors(level[index], 1)
   generateDoor(level[index])
 }
 
-const createEndRoom = (level, index) => {
+const createEndRoom = (level, index, floor_number) => {
   level[index] = {
     ...level[index],
     ...ROOM_TEMPLATE,
@@ -433,28 +433,30 @@ const createEndRoom = (level, index) => {
     locked: true
   }
 
-  // door placement to next level
-  const perimeter_walls = PERIMETER_ROOMS.find(room => room.index === index)?.walls
+  if (floor_number < 30) { // no door placement for next floor on level 30 as it's the last level
 
-  if (perimeter_walls) {
-    let level_door
+    // door placement to next level
+    const perimeter_walls = PERIMETER_ROOMS.find(room => room.index === index)?.walls
 
-    // if more than one wall, randomly choose one
-    if (perimeter_walls.length > 1) {
-      level_door = perimeter_walls[Math.floor(Math.random() * perimeter_walls.length)]
+    if (perimeter_walls) {
+      let level_door
+
+      // if more than one wall, randomly choose one
+      if (perimeter_walls.length > 1) {
+        level_door = perimeter_walls[Math.floor(Math.random() * perimeter_walls.length)]
+      }
+
+      // if only one wall, use that one
+      else {
+        level_door = perimeter_walls[0]
+      }
+
+      level[index].doors[level_door] = true
+      level[index].level_door = level_door
     }
-
-    // if only one wall, use that one
-    else {
-      level_door = perimeter_walls[0]
-    }
-
-    level[index].doors[level_door] = true
-    level[index].level_door = level_door
   }
 
   // creat a door to a random adjacent block
-  // generateDoors(level[index], 1, false)
   generateDoor(level[index], false)
 }
 
@@ -533,7 +535,7 @@ const generateRooms = (floor_number, prior_room) => {
   createStartRoom(rooms, start_room_index, prior_room)
   visited_blocks.push(start_room_index)
 
-  createEndRoom(rooms, end_room_index)
+  createEndRoom(rooms, end_room_index, floor_number)
   visited_blocks.push(end_room_index)
 
   // create rooms
@@ -573,7 +575,11 @@ const getFloorData = (floor_number) => {
 }
 
 // generate a level - combines rooms with monsters and items
-const generateLevel = () => {
+// - level_number: the level number (1-30)
+// - prior_room: the room from the previous level (null if first level)
+//   - index: the index of the room (0-15)
+//   - level_door: the direction of the door to the next level ('N', 'S', 'E', 'W')
+const generateLevel = (level_number, prior_room) => {
 
   // DEBUG ROOM
   // const exit_room_debug = {
@@ -589,9 +595,7 @@ const generateLevel = () => {
     max_attempts = 20
 
   while (room_count <= min_room_count) {
-
-    // level = generateLevel(exit_room_debug)
-    level = generateRooms(1) // HARD-CODED FLOOR #1
+    level = generateRooms(level_number, prior_room)
 
     room_count = level.rooms.filter(block => block.is_room).length
 
@@ -616,12 +620,11 @@ const generateLevel = () => {
 
       if (available_floor_monster_count > 0) {
         room.monster = available_floor_monster_count === 1
-          ? floor_data.monsters[0]
-          : floor_data.monsters[Math.floor(Math.random() * floor_data.monsters.length)]
+          ? { ...floor_data.monsters[0] }
+          : { ...floor_data.monsters[Math.floor(Math.random() * floor_data.monsters.length)] }
 
         if (floor_data.items.length > 0) {
           room.item = floor_data.items.pop()
-          // console.log(room)
         }
       }
     })

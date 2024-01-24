@@ -38,7 +38,7 @@ const Warrior = ({ castShadow = false, position, rotation, scale, animation_prop
   // REACT-SPRING ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
     react_spring_y: animation_props.visible ? 0 : 1,
-    config: { mass: 10, tension: 300, friction: 100 },
+    config: { mass: 10, tension: 300, friction: 100, precision: 0.001 },
 
     onRest: () => {
 

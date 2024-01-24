@@ -105,7 +105,7 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
   // REACT SPRING - SIGN ANIMATION
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
     react_spring_y: animation_props.visible ? 0 : 1,
-    config: { mass: 7, tension: 600, friction: 100 },
+    config: { mass: 7, tension: 600, friction: 100, precision: 0.001 },
 
     onRest: () => {
 
@@ -119,7 +119,7 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
     }
   }))
 
-  const sign_animation = react_spring_y.to([0, 1], [0, -3.0])
+  const sign_animation = react_spring_y.to([0, 1], [0, -4.0])
 
   const animateSign = () => {
     setIsAnimating(true)
@@ -146,8 +146,10 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
 
     // this controls the image on the sign
     if (animation_props.monster !== controls_image.image) {
+      const monster_lookup = Object.values(MONSTERS).find(monster => monster.label === animation_props.monster.label)
+
       setControlsImage({
-        image: animation_props.monster,
+        image: monster_lookup ?? 'NONE',
         pos_x: animation_props.monster_pos_x ?? 0,
         pos_y: animation_props.monster_pos_y ?? 0,
         scale: animation_props.monster_scale ?? 1,
