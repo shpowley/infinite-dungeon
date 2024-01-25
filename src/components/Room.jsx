@@ -5,6 +5,8 @@ import { useSpring, animated } from '@react-spring/three'
 
 import Door from './Door'
 import { ANIMATION_DEFAULTS } from '../common/Constants'
+import { Image } from '@react-three/drei'
+import HUDImages from '../common/HUDImages'
 
 const THICKNESS_EXTENT = 0.3
 
@@ -94,7 +96,7 @@ const Wall = memo(({ position, rotation, visible = true, animation_props = { ...
 
   const [{ react_spring_y }, react_spring_api] = useSpring(() => ({
     react_spring_y: animation_props.visible ? 0 : 1,
-    config: { mass: 6, tension: 400, friction: animation_props.friction ?? 90, precision: 0.001},
+    config: { mass: 6, tension: 400, friction: animation_props.friction ?? 90, precision: 0.001 },
 
     onRest: () => {
 
@@ -358,12 +360,30 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       animation_props={animation_props_north}
     />
 
+    <Image
+      url={HUDImages.DIRECTION_NORTH.path}
+      transparent
+      position={[0, 0.2, -6]}
+      rotation={[-Math.PI * 0.5, 0, 0]}
+      scale={HUDImages.DIRECTION_NORTH.scale}
+      visible={animation_props_north.visible && animation_props_north.door_visible}
+    />
+
     <Wall
       id='SOUTH'
       position={[0, ROOM_COLLIDER.wall_position_y, dimension]}
       rotation={[0, Math.PI, 0]}
       visible={!walls_hidden.SOUTH}
       animation_props={animation_props_south}
+    />
+
+    <Image
+      url={HUDImages.DIRECTION_SOUTH.path}
+      transparent
+      position={[0, 0.2, 6]}
+      rotation={[-Math.PI * 0.5, 0, Math.PI]}
+      scale={HUDImages.DIRECTION_SOUTH.scale}
+      visible={animation_props_north.visible && animation_props_south.door_visible}
     />
 
     <Wall
@@ -374,12 +394,30 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       animation_props={animation_props_east}
     />
 
+    <Image
+      url={HUDImages.DIRECTION_EAST.path}
+      transparent
+      position={[6, 0.2, 0]}
+      rotation={[-Math.PI * 0.5, 0, -Math.PI * 0.5]}
+      scale={HUDImages.DIRECTION_EAST.scale}
+      visible={animation_props_north.visible && animation_props_east.door_visible}
+    />
+
     <Wall
       id='WEST'
       position={[-dimension, ROOM_COLLIDER.wall_position_y, 0]}
       rotation={[0, Math.PI * 0.5, 0]}
       visible={!walls_hidden.WEST}
       animation_props={animation_props_west}
+    />
+
+    <Image
+      url={HUDImages.DIRECTION_WEST.path}
+      transparent
+      position={[-6, 0.2, 0]}
+      rotation={[-Math.PI * 0.5, 0, Math.PI * 0.5]}
+      scale={HUDImages.DIRECTION_WEST.scale}
+      visible={animation_props_north.visible && animation_props_west.door_visible}
     />
 
     <Ceiling />

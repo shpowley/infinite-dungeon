@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
-import { Environment, OrbitControls, useHelper, useKeyboardControls } from '@react-three/drei'
+import { Environment, OrbitControls, ScreenSpace, Text, useHelper, useKeyboardControls } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
-import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS, GAME_PHASE } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
@@ -13,14 +13,9 @@ import Warrior from './components/Warrior'
 import Sign from './components/Sign'
 import { generateLevel } from './common/Level'
 import D20Enemy from './components/D20Enemy'
+import Keys from './components/Keys'
 
-const PHASE = {
-  GAME_START: 0,
-  GAME_OVER: 1,
-  STANDBY: 2,
-  MOVEMENT: 3,
-  COMBAT: 4
-}
+const FILE_FONT_BEBAS_NEUE = './fonts/bebas-neue-v9-latin-regular.woff'
 
 const TIMING = {
   CLEAR_SIGN: 500,
@@ -77,19 +72,24 @@ const Experience = () => {
     ref_light = useRef(),
     ref_shadow_camera = useRef(),
     ref_d20 = useRef(),
-    ref_d20_enemy = useRef()
+    ref_d20_enemy = useRef(),
+
+    ref_text_testing = useRef()
 
   const
     [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(SIGN_PROPS_DEFAULT),
     [dice_enabled, setDiceEnabled] = useState(false),
-    [game_phase, setGamePhase] = useState(PHASE.GAME_START),
+    [game_phase, setGamePhase] = useState(GAME_PHASE.START),
 
     [leva_dungeon_info, setLevaDungeonInfo] = useState({
       floor_select: 1,
       room_select: 1,
     })
+
+  // USED TO HELP POSITION 2D HUD ELEMENTS
+  const aspect_ratio = useThree(state => state.viewport.aspect)
 
   /**
    * DEBUG CONTROLS
@@ -444,7 +444,7 @@ const Experience = () => {
     }
 
     is_build_complete = false
-    setGamePhase(PHASE.STANDBY)
+    setGamePhase(GAME_PHASE.STANDBY)
 
     // --- DECONSTRUCTION PHASE ---
     if (
@@ -717,7 +717,7 @@ const Experience = () => {
 
           if (player_data.health <= 0) {
             console.log('PLAYER DEFEATED')
-            setGamePhase(PHASE.GAME_OVER)
+            setGamePhase(GAME_PHASE.GAME_OVER)
           }
         }
 
@@ -749,22 +749,22 @@ const Experience = () => {
   // KEYBOARD CONTROLS
   useEffect(() => {
     switch (game_phase) {
-      case PHASE.GAME_START:
+      case GAME_PHASE.START:
         console.log('*** TITLE / GAME START ***')
         break
 
-      case PHASE.GAME_OVER:
+      case GAME_PHASE.GAME_OVER:
         console.log('*** GAME OVER ***')
         break
 
-      case PHASE.MOVEMENT:
+      case GAME_PHASE.MOVEMENT:
         console.log('*** MOVEMENT PHASE ***')
         // show keyboard controls
         // - highlight direction keys matching available doors
         // - disable other keys
         break
 
-      case PHASE.COMBAT:
+      case GAME_PHASE.COMBAT:
         console.clear()
         console.log('*** COMBAT START PHASE ***')
         console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
@@ -774,7 +774,7 @@ const Experience = () => {
         // - disable direction keys
         break
 
-      case PHASE.STANDBY:
+      case GAME_PHASE.STANDBY:
       default:
       // hide keyboard controls
     }
@@ -783,7 +783,7 @@ const Experience = () => {
       state => state,
 
       keys => {
-        if (game_phase === PHASE.MOVEMENT) {
+        if (game_phase === GAME_PHASE.MOVEMENT) {
           let direction = null
 
           if (keys.NORTH && active_room.doors.N) {
@@ -856,7 +856,7 @@ const Experience = () => {
           }
         }
 
-        else if (game_phase === PHASE.COMBAT) {
+        else if (game_phase === GAME_PHASE.COMBAT) {
           if (keys.ROLL_DICE && dice_enabled && dice_ready) {
             rollCombat()
           }
@@ -869,7 +869,7 @@ const Experience = () => {
   useEffect(() => {
     if (is_build_complete) {
       if (animation_sign.visible) {
-        setGamePhase(PHASE.COMBAT)
+        setGamePhase(GAME_PHASE.COMBAT)
       }
       else if (
         animation_room.visible &&
@@ -881,10 +881,10 @@ const Experience = () => {
           active_room.doors.W
         )
       ) {
-        setGamePhase(PHASE.MOVEMENT)
+        setGamePhase(GAME_PHASE.MOVEMENT)
       }
       else {
-        setGamePhase(PHASE.STANDBY)
+        setGamePhase(GAME_PHASE.STANDBY)
       }
     }
   }, [animation_room, animation_sign, is_build_complete])
@@ -928,6 +928,38 @@ const Experience = () => {
       intensity={controls_lighting.ambient_intensity}
       color={controls_lighting.ambient_color}
     />
+
+    <ScreenSpace
+      depth={1}
+    >
+      <Text
+        font={FILE_FONT_BEBAS_NEUE}
+        color='#0000ff'
+        scale={[0.03, 0.03, 0.03]}
+        position={[-0.4 * aspect_ratio, 0.4, 0]}
+        anchorX={'left'}
+        anchorY={'top'}
+      >
+        PLAYER
+      </Text>
+
+      <Text
+        ref={ref_text_testing}
+        font={FILE_FONT_BEBAS_NEUE}
+        color='#0000ff'
+        scale={[0.1, 0.1, 0.1]}
+        position={[0, 0, 0]}
+
+        onClick={() => {
+          console.log('CLICKED')
+          console.log(ref_text_testing.current.text = 'Oh noes!\nA new line!')
+        }}
+      >
+        TESTING
+      </Text>
+
+      <Keys game_phase={game_phase} />
+    </ScreenSpace>
 
     <Physics
       debug={controls_physics.debug}

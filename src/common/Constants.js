@@ -52,6 +52,14 @@ const DICE_OWNER = {
   ENEMY: 1
 }
 
+const GAME_PHASE = {
+  START: 0,
+  GAME_OVER: 1,
+  STANDBY: 2,
+  MOVEMENT: 3,
+  COMBAT: 4
+}
+
 export {
   TONE_MAPPING_OPTIONS,
   CAMERA_DEFAULTS,
@@ -59,5 +67,6 @@ export {
   LEVA_SORT_ORDER,
   KEYBOARD,
   ITEM_KEYS,
-  DICE_OWNER
+  DICE_OWNER,
+  GAME_PHASE
 }
