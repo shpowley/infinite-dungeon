@@ -94,12 +94,12 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
     // apply a random force and spin
     ref_d20_body.current.applyImpulse({
       x: scaling * randomFloat(-80, 80), // left/right force
-      y: scaling * randomFloat(30, 40), // upward force
+      y: scaling * randomFloat(50, 60), // upward force
       z: scaling * randomFloat(-80, 80) // forward force
     }, true)
 
     ref_d20_body.current.applyTorqueImpulse({
-      x: randomFloat(-15, -5), // forward spin
+      x: randomFloat(-10, -5), // forward spin
       y: 0,
       z: randomFloat(-10, 10) // left/right spin
     }, true)
@@ -117,7 +117,7 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
 
     const intersect = raycaster.intersectObject(ref_d20_mesh.current, true)
 
-    dice_roll_value = FACE_ID_LOOKUP[intersect[0].faceIndex]
+    dice_roll_value = FACE_ID_LOOKUP[intersect[0].faceIndex] ?? 1
 
     // callback to the parent component
     if (onRollComplete && typeof onRollComplete === 'function') {

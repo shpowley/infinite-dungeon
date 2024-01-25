@@ -60,6 +60,8 @@ const GAME_PHASE = {
   COMBAT: 4
 }
 
+const FILE_FONT_BEBAS_NEUE = './fonts/bebas-neue-v9-latin-regular.woff'
+
 export {
   TONE_MAPPING_OPTIONS,
   CAMERA_DEFAULTS,
@@ -68,5 +70,6 @@ export {
   KEYBOARD,
   ITEM_KEYS,
   DICE_OWNER,
-  GAME_PHASE
+  GAME_PHASE,
+  FILE_FONT_BEBAS_NEUE
 }

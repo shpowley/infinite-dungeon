@@ -11,6 +11,7 @@ const HUDImages = {
 
   COINS: {
     path: HUD_IMAGE_PATH + 'coins.webp',
+    scale: [1.62, 1]
   },
 
   COPYRIGHT: {
@@ -69,10 +70,12 @@ const HUDImages = {
 
   HEART: {
     path: HUD_IMAGE_PATH + 'heart.webp',
+    scale: [1, 1.02]
   },
 
   KEY: {
     path: HUD_IMAGE_PATH + 'key.webp',
+    scale: [1.65, 0.8]
   },
 
   KEY_EAST: {
@@ -111,11 +114,17 @@ const HUDImages = {
 
   POTIONS: {
     path: HUD_IMAGE_PATH + 'potions.webp',
+    scale: [1.36, 1]
   },
 
   RED_X: {
     path: HUD_IMAGE_PATH + 'red-x.webp',
-  }
+  },
+
+  SWORD: {
+    path: HUD_IMAGE_PATH + 'sword.webp',
+    scale: [1, 1.16]
+  },
 }
 
 export default HUDImages

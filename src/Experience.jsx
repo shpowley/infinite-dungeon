@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { Environment, OrbitControls, ScreenSpace, Text, useHelper, useKeyboardControls } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
-import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS, GAME_PHASE } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS, GAME_PHASE, FILE_FONT_BEBAS_NEUE } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
@@ -14,8 +14,10 @@ import Sign from './components/Sign'
 import { generateLevel } from './common/Level'
 import D20Enemy from './components/D20Enemy'
 import Keys from './components/Keys'
-
-const FILE_FONT_BEBAS_NEUE = './fonts/bebas-neue-v9-latin-regular.woff'
+import TitleDialog from './components/TitleDialog'
+import PlayerInfo from './components/PlayerInfo'
+import StatInfo from './components/StatInfo'
+import EnemyInfo from './components/EnemyInfo'
 
 const TIMING = {
   CLEAR_SIGN: 500,
@@ -56,8 +58,8 @@ if (parameterEnabled('PERF') || parameterEnabled('perf')) {
 let
   active_level = null,
   active_room = null,
-  player_data = null,
   is_build_complete = false,
+  player_data = null,
 
   dice_ready = false,
   in_combat_roll = false,
@@ -74,7 +76,17 @@ const Experience = () => {
     ref_d20 = useRef(),
     ref_d20_enemy = useRef(),
 
-    ref_text_testing = useRef()
+    ref_player_info = {
+      health: useRef(),
+      potions: useRef(),
+      gold: useRef(),
+      key: useRef()
+    },
+
+    ref_stats = {
+      floor: useRef(),
+      kills: useRef()
+    }
 
   const
     [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
@@ -319,28 +331,6 @@ const Experience = () => {
     'dungeon',
 
     {
-      'floor debug': folder(
-        {
-          floor_select: {
-            label: 'floor select',
-            value: 1,
-            min: 1,
-            max: 30,
-            step: 1,
-          },
-          'build floor': button(() => {
-            // create new random floor based on template
-            console.log('create new floor')
-          }),
-          'show floor info': button(() => {
-            if (active_level) {
-              console.log(active_level)
-            }
-          })
-        },
-        { collapsed: true }
-      ),
-
       'room debug': folder(
         {
           room_select: {
@@ -563,7 +553,7 @@ const Experience = () => {
         delay += TIMING.BUILD_DICE
 
         setTimeout(() => {
-          setDiceEnabled(() => true)
+          setDiceEnabled(true)
         }, delay)
       }
     }
@@ -579,8 +569,16 @@ const Experience = () => {
       is_player_rolling = true
       is_enemy_rolling = true
       dice_ready = false
-      ref_d20.current.rollD20()
-      ref_d20_enemy.current.rollD20()
+
+      setTimeout(() => {
+        console.log('ROLLING PLAYER DICE')
+        ref_d20.current.rollD20()
+      }, 500)
+
+      setTimeout(() => {
+        console.log('ROLLING ENEMY DICE')
+        ref_d20_enemy.current.rollD20()
+      }, 600)
     }
   }
 
@@ -649,8 +647,8 @@ const Experience = () => {
           }
           else {
             console.log('MONSTER DEFEATED')
-
             player_data.kill_count++
+            ref_stats.kills.current.text = `KILL COUNT: ${player_data.kill_count}`
 
             if (active_room.item) {
               console.log(`PLAYER FINDS: ${active_room.item.name} - ${active_room.item.description}`)
@@ -658,15 +656,18 @@ const Experience = () => {
               switch (active_room.item.type) {
                 case ITEM_KEYS.HEALTH_POTION:
                   player_data.potions++
+                  ref_player_info.potions.current.text = player_data.potions
                   break
 
                 case ITEM_KEYS.TREASURE_CHEST:
                   player_data.gold += active_room.item.value
+                  ref_player_info.gold.current.text = player_data.gold
                   break
 
                 case ITEM_KEYS.KEY:
                   console.log('PLAYER GETS KEY')
                   player_data.key = true
+                  ref_player_info.key.current.visible = true
                   break
 
                 default:
@@ -707,6 +708,7 @@ const Experience = () => {
           )
 
           player_data.health -= damage
+          ref_player_info.health.current.text = `${player_data.health} HP`
 
           if (dice_roll_enemy === 20) {
             console.log('CRITICAL HIT')
@@ -832,8 +834,8 @@ const Experience = () => {
             // UNDEFINED OR NOT AN INTEGER TO ANOTHER ROOM. IF CURRENTLY IN THE FLOOR BOSS ROOM MOVE TO NEXT FLOOR
             else if (active_room.index === active_level.room_end.index) {
               console.log('MOVE TO NEXT FLOOR')
-
               player_data.floor_index++
+              ref_stats.floor.current.text = `FLOOR: ${player_data.floor_index}`
 
               // GENERATE NEW LEVEL BASED ON CURRENT FLOOR (1 >> 2 >> 3 >> etc.)
               // - STARTING ROOM IS FOR THE NEXT LEVEL IS BASED ON THE CURRENT LEVEL'S ENDING ROOM
@@ -932,33 +934,42 @@ const Experience = () => {
     <ScreenSpace
       depth={1}
     >
-      <Text
-        font={FILE_FONT_BEBAS_NEUE}
-        color='#0000ff'
-        scale={[0.03, 0.03, 0.03]}
-        position={[-0.4 * aspect_ratio, 0.4, 0]}
-        anchorX={'left'}
-        anchorY={'top'}
-      >
-        PLAYER
-      </Text>
+      <Suspense fallback={null}>
+        <PlayerInfo
+          game_phase={game_phase}
+          aspect_ratio={aspect_ratio}
+          data={player_data}
+          inner_refs={ref_player_info}
+        />
+      </Suspense>
 
-      <Text
-        ref={ref_text_testing}
-        font={FILE_FONT_BEBAS_NEUE}
-        color='#0000ff'
-        scale={[0.1, 0.1, 0.1]}
-        position={[0, 0, 0]}
+      <Suspense fallback={null}>
+        <EnemyInfo
+          game_phase={game_phase}
+          aspect_ratio={aspect_ratio}
+          data={active_room?.monster}
+        />
+      </Suspense>
 
-        onClick={() => {
-          console.log('CLICKED')
-          console.log(ref_text_testing.current.text = 'Oh noes!\nA new line!')
-        }}
-      >
-        TESTING
-      </Text>
+      <Suspense fallback={null}>
+        <StatInfo
+          game_phase={game_phase}
+          aspect_ratio={aspect_ratio}
+          data={player_data}
+          inner_refs={ref_stats}
+        />
+      </Suspense>
 
-      <Keys game_phase={game_phase} />
+      <Suspense fallback={null}>
+        <TitleDialog
+          visible={game_phase === GAME_PHASE.START}
+          onClick={newGame}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <Keys game_phase={game_phase} />
+      </Suspense>
     </ScreenSpace>
 
     <Physics
@@ -981,19 +992,23 @@ const Experience = () => {
         animation_props={animation_sign}
       />
 
-      <D20
-        inner_ref={ref_d20}
-        castShadow
-        enabled={dice_enabled}
-        onRollComplete={onD20RollComplete}
-      />
+      <Suspense fallback={null}>
+        <D20
+          inner_ref={ref_d20}
+          castShadow
+          enabled={dice_enabled}
+          onRollComplete={onD20RollComplete}
+        />
+      </Suspense>
 
-      <D20Enemy
-        inner_ref={ref_d20_enemy}
-        castShadow
-        enabled={dice_enabled}
-        onRollComplete={onD20RollComplete}
-      />
+      <Suspense fallback={null}>
+        <D20Enemy
+          inner_ref={ref_d20_enemy}
+          castShadow
+          enabled={dice_enabled}
+          onRollComplete={onD20RollComplete}
+        />
+      </Suspense>
 
       <Room
         receiveShadow

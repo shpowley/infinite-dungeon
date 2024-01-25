@@ -4,13 +4,13 @@ import { GAME_PHASE } from "../common/Constants"
 
 const Keys = ({ game_phase = GAME_PHASE.START, pos_x = -0.065, pos_y = -0.33, scale = 0.04 }) => {
   const
-    controls_visible = [GAME_PHASE.MOVEMENT, GAME_PHASE.COMBAT].includes(game_phase),
+    controls_visible = [GAME_PHASE.STANDBY, GAME_PHASE.MOVEMENT, GAME_PHASE.COMBAT].includes(game_phase),
     in_combat = game_phase === GAME_PHASE.COMBAT
 
   return <group
+    scale={scale}
     position={[pos_x, pos_y, 0]}
     visible={controls_visible}
-    scale={scale}
   >
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_NORTH.path : HUDImages.KEY_NORTH.path}
