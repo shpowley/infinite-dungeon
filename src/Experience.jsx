@@ -4,6 +4,7 @@ import { useThree } from '@react-three/fiber'
 import { Environment, Image, OrbitControls, ScreenSpace, Text, useHelper, useKeyboardControls } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
+import { Perf } from 'r3f-perf'
 
 import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS, GAME_PHASE, FILE_FONT_BEBAS_NEUE } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
@@ -49,12 +50,7 @@ const PLAYER_INFO_DEFAULT = {
   kill_count: 0
 }
 
-// DYNAMIC IMPORT FOR R3F PERFORMANCE MONITOR
-let Perf = null
-
-if (parameterEnabled('PERF') || parameterEnabled('perf')) {
-  Perf = (await import('r3f-perf')).Perf
-}
+let show_perf = (parameterEnabled('PERF') || parameterEnabled('perf'))
 
 let
   active_level = null,
@@ -984,7 +980,7 @@ const Experience = () => {
 
   return <>
 
-    {Perf && <Perf position='top-left' />}
+    {show_perf && <Perf position='top-left' />}
 
     <Environment preset='sunset' />
 
