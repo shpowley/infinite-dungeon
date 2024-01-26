@@ -38,7 +38,8 @@ const KEYBOARD = {
   SOUTH: 'SOUTH',
   EAST: 'EAST',
   WEST: 'WEST',
-  ROLL_DICE: 'ROLL_DICE'
+  ROLL_DICE: 'ROLL_DICE',
+  POTION: 'POTION'
 }
 
 const ITEM_KEYS = {

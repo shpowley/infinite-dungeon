@@ -53,7 +53,8 @@ const App = () => {
         { name: KEYBOARD.SOUTH, keys: ['KeyS', 'ArrowDown'] },
         { name: KEYBOARD.EAST, keys: ['KeyD', 'ArrowRight'] },
         { name: KEYBOARD.WEST, keys: ['KeyA', 'ArrowLeft'] },
-        { name: KEYBOARD.ROLL_DICE, keys: ['Space'] }
+        { name: KEYBOARD.ROLL_DICE, keys: ['Space'] },
+        { name: KEYBOARD.POTION, keys: ['1']}
       ]}
     >
       <Canvas

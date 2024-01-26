@@ -5,11 +5,9 @@ import HUDImages from "../common/HUDImages"
 
 const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data, inner_refs }) => {
   const
-    // controls_visible = game_phase === GAME_PHASE.COMBAT,
-    controls_visible = true,
+    controls_visible = game_phase === GAME_PHASE.COMBAT,
+    // controls_visible = true,
     text_color = 'black'
-
-  // STOPPED HERE - NEXT: USEREFS TO CHANGE TEXT
 
   return <group
     scale={0.021}
@@ -19,7 +17,7 @@ const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data,
     anchorY={'top'}
   >
     <Text
-      ref={inner_refs?.health}
+      ref={inner_refs?.name}
       font={FILE_FONT_BEBAS_NEUE}
       color={text_color}
       anchorX={'right'}

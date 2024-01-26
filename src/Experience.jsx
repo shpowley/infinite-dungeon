@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
-import { Environment, OrbitControls, ScreenSpace, Text, useHelper, useKeyboardControls } from '@react-three/drei'
+import { Environment, Image, OrbitControls, ScreenSpace, Text, useHelper, useKeyboardControls } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 
@@ -11,13 +11,14 @@ import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
 import Warrior from './components/Warrior'
 import Sign from './components/Sign'
-import { generateLevel } from './common/Level'
+import { FLOOR_ITEMS, generateLevel } from './common/Level'
 import D20Enemy from './components/D20Enemy'
 import Keys from './components/Keys'
 import TitleDialog from './components/TitleDialog'
 import PlayerInfo from './components/PlayerInfo'
 import StatInfo from './components/StatInfo'
 import EnemyInfo from './components/EnemyInfo'
+import HUDImages from './common/HUDImages'
 
 const TIMING = {
   CLEAR_SIGN: 500,
@@ -42,7 +43,7 @@ const PLAYER_INFO_DEFAULT = {
   room_index: null,
 
   gold: 0,
-  potions: 0,
+  potions: 3,
   key: false,
 
   kill_count: 0
@@ -60,6 +61,7 @@ let
   active_room = null,
   is_build_complete = false,
   player_data = null,
+  door_indicator_default_url = HUDImages.RED_X.path,
 
   dice_ready = false,
   in_combat_roll = false,
@@ -75,12 +77,19 @@ const Experience = () => {
     ref_shadow_camera = useRef(),
     ref_d20 = useRef(),
     ref_d20_enemy = useRef(),
+    ref_door_indicator = useRef(),
+    ref_log = useRef(),
 
     ref_player_info = {
       health: useRef(),
       potions: useRef(),
       gold: useRef(),
       key: useRef()
+    },
+
+    ref_enemy_info = {
+      name: useRef(),
+      health: useRef()
     },
 
     ref_stats = {
@@ -347,7 +356,7 @@ const Experience = () => {
               })
             }
           },
-          'build room': button(() => {
+          'teleport to room': button(() => {
             active_room = active_level.rooms[leva_dungeon_info.room_select]
             animateRoom()
           }),
@@ -393,7 +402,6 @@ const Experience = () => {
   const newGame = () => {
     active_level = generateLevel(1)
 
-    console.clear()
     console.log('*** NEW GAME ***')
     console.log('LEVEL', active_level)
 
@@ -410,6 +418,83 @@ const Experience = () => {
     animateRoom()
   }
 
+  const clearDoorIndicator = () => {
+    ref_door_indicator.current.visible = false
+  }
+
+  const updateDoorIndicator = () => {
+    let
+      show_indicator = false,
+      indicator_direction,
+      HUD_image,
+      adjacent_room_id
+
+    // STARTING ROOM
+    if (active_room.index === active_level.room_start.index) {
+      if (active_level.room_start.level_door) {
+        show_indicator = true
+        indicator_direction = active_level.room_start.level_door
+        HUD_image = HUDImages.RED_X
+      }
+    }
+
+    // ENDING ROOM
+    else if (active_room.index === active_level.room_end.index) {
+      if (active_level.room_end.level_door) {
+        show_indicator = true
+        indicator_direction = active_level.room_end.level_door
+        HUD_image = HUDImages.EXIT
+      }
+    }
+
+    // OTHER ROOMS -- IF ADJACENT TO THE BOSS ROOM, SHOW THE SKULL
+    else {
+      for (const [direction, is_door] of Object.entries(active_room.doors)) {
+        if (is_door) {
+          adjacent_room_id = active_room.adjacent_blocks.find(block => block.direction === direction).index
+
+          if (adjacent_room_id === active_level.room_end.index) {
+            show_indicator = true
+            indicator_direction = direction
+            HUD_image = HUDImages.MONSTER
+            break
+          }
+        }
+      }
+    }
+
+    if (show_indicator) {
+      const indicator = ref_door_indicator.current
+
+      indicator.material.map = new THREE.TextureLoader().load(HUD_image.path)
+      indicator.scale.set(...HUD_image.scale)
+
+      switch (indicator_direction) {
+        case 'N':
+          indicator.rotation.set(0, 0, 0)
+          indicator.position.set(0, 1.5, -7.5)
+          break
+
+        case 'S':
+          indicator.rotation.set(0, Math.PI, 0)
+          indicator.position.set(0, 1.5, 7.5)
+          break
+
+        case 'E':
+          indicator.rotation.set(0, -Math.PI * 0.5, 0)
+          indicator.position.set(7.5, 1.5, 0)
+          break
+
+        case 'W':
+          indicator.rotation.set(0, Math.PI * 0.5, 0)
+          indicator.position.set(-7.5, 1.5, 0)
+          break
+      }
+
+      indicator.visible = true
+    }
+  }
+
   const animateRoom = () => {
     if (!active_level) {
       console.warn('NO LEVEL DATA')
@@ -421,9 +506,9 @@ const Experience = () => {
       return
     }
 
-    // UPDATE HUD MAP INSTEAD OF CONSOLE LOG
-    console.log('ROOM DATA', active_room)
-    console.log('PLAYER DATA', player_data)
+    // TODO: UPDATE MINI-MAP INSTEAD OF CONSOLE LOG (KEEP THESE COMMENTED LOGS FOR NOW)
+    // console.log('ROOM DATA', active_room)
+    // console.log('PLAYER DATA', player_data)
 
     let
       delay = 0,
@@ -496,6 +581,8 @@ const Experience = () => {
             animate: true,
             visible: false
           })
+
+          clearDoorIndicator()
         }, delay)
 
         delay_triggered = true
@@ -523,6 +610,8 @@ const Experience = () => {
             W: active_room.doors?.W ?? false,
           }
         })
+
+        updateDoorIndicator()
       }, delay)
 
       // construct warrior
@@ -554,6 +643,7 @@ const Experience = () => {
 
         setTimeout(() => {
           setDiceEnabled(true)
+          ref_log.current.text = `${active_room.monster.label} APPEARS!\nTIME TO ATTACK!`
         }, delay)
       }
     }
@@ -570,13 +660,13 @@ const Experience = () => {
       is_enemy_rolling = true
       dice_ready = false
 
+      ref_log.current.text = 'ROLLING THE DICE...'
+
       setTimeout(() => {
-        console.log('ROLLING PLAYER DICE')
         ref_d20.current.rollD20()
       }, 500)
 
       setTimeout(() => {
-        console.log('ROLLING ENEMY DICE')
         ref_d20_enemy.current.rollD20()
       }, 600)
     }
@@ -607,11 +697,10 @@ const Experience = () => {
        *    x winner base attack (or CRITICAL HIT DAMAGE)
        *    x winner health / winner max health (PERCENTAGE OF HEALTH)
        */
+      let log_text = ''
+
       if (!is_player_rolling && !is_enemy_rolling) {
-        console.clear()
-        console.log('-- COMBAT DICE ROLL --')
-        console.log('PLAYER ROLLED A: ', dice_roll_player)
-        console.log('MONSTER ROLLED A: ', dice_roll_enemy)
+        log_text = `PLAYER ROLL: ${dice_roll_player}\nMONSTER ROLL: ${dice_roll_enemy}`
 
         let
           damage = 0,
@@ -619,7 +708,7 @@ const Experience = () => {
 
         // TIE - NO DAMAGE DEALT - ROLL AGAIN
         if (dice_roll_player === dice_roll_enemy) {
-          console.log('TIE - ROLL AGAIN')
+          log_text += '\nTIE - ROLL AGAIN'
         }
 
         // PLAYER WINS COMBAT ROUND
@@ -635,23 +724,22 @@ const Experience = () => {
           )
 
           active_room.monster.health -= damage
+          ref_enemy_info.health.current.text = `${active_room.monster.health} HP`
 
           if (dice_roll_player === 20) {
-            console.log('CRITICAL HIT')
+            log_text += '\nCRITICAL HIT!!'
           }
 
-          console.log(`PLAYER DEALS ${damage} DAMAGE TO ${active_room.monster.label}`)
+          log_text += `\n${active_room.monster.label} TAKES ${damage} DAMAGE`
 
-          if (active_room.monster.health > 0) {
-            console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
-          }
-          else {
-            console.log('MONSTER DEFEATED')
+          if (active_room.monster.health <= 0) {
+            log_text += `\nMONSTER DEFEATED!`
+
             player_data.kill_count++
             ref_stats.kills.current.text = `KILL COUNT: ${player_data.kill_count}`
 
             if (active_room.item) {
-              console.log(`PLAYER FINDS: ${active_room.item.name} - ${active_room.item.description}`)
+              log_text += `\n${active_room.item.name} - ${active_room.item.description} FOUND!`
 
               switch (active_room.item.type) {
                 case ITEM_KEYS.HEALTH_POTION:
@@ -665,7 +753,6 @@ const Experience = () => {
                   break
 
                 case ITEM_KEYS.KEY:
-                  console.log('PLAYER GETS KEY')
                   player_data.key = true
                   ref_player_info.key.current.visible = true
                   break
@@ -675,9 +762,6 @@ const Experience = () => {
               }
 
               delete active_room.item
-
-              // UPDATE PLAYER DATA / HUD
-              console.log(player_data)
             }
 
             delete active_room.monster
@@ -711,18 +795,18 @@ const Experience = () => {
           ref_player_info.health.current.text = `${player_data.health} HP`
 
           if (dice_roll_enemy === 20) {
-            console.log('CRITICAL HIT')
+            log_text += '\nCRITICAL HIT!!'
           }
 
-          console.log(`${active_room.monster.label} DEALS ${damage} DAMAGE TO PLAYER`)
-          console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
+          log_text += `\nPLAYER TAKES ${damage} DAMAGE`
 
           if (player_data.health <= 0) {
-            console.log('PLAYER DEFEATED')
+            log_text += `\nOH NOES!! PLAYER DEFEATED!`
             setGamePhase(GAME_PHASE.GAME_OVER)
           }
         }
 
+        ref_log.current.text = log_text
         in_combat_roll = false
         dice_ready = true
       }
@@ -761,30 +845,37 @@ const Experience = () => {
 
       case GAME_PHASE.MOVEMENT:
         console.log('*** MOVEMENT PHASE ***')
-        // show keyboard controls
-        // - highlight direction keys matching available doors
-        // - disable other keys
         break
 
       case GAME_PHASE.COMBAT:
-        console.clear()
         console.log('*** COMBAT START PHASE ***')
-        console.log(`[PLAYER: ${player_data.health} HP | ${PLAYER_INFO_DEFAULT.attack} ATTACK] | [MONSTER: ${active_room.monster.health} HP | ${active_room.monster.attack} ATTACK]`)
-
-        // show keyboard controls
-        // - highlight combat / roll dice key
-        // - disable direction keys
         break
 
       case GAME_PHASE.STANDBY:
       default:
-      // hide keyboard controls
     }
 
     return sub(
       state => state,
 
       keys => {
+
+        // POTION
+        if ((game_phase === GAME_PHASE.COMBAT || game_phase === GAME_PHASE.MOVEMENT) && keys.POTION && player_data.potions > 0) {
+          ref_log.current.text = 'USED A POTION'
+
+          player_data.potions--
+          ref_player_info.potions.current.text = player_data.potions
+
+          player_data.health = Math.min(
+            player_data.health + FLOOR_ITEMS.HEALTH_POTION.value,
+            PLAYER_INFO_DEFAULT.health
+          )
+
+          ref_player_info.health.current.text = `${player_data.health} HP`
+        }
+
+        // MOVEMENT
         if (game_phase === GAME_PHASE.MOVEMENT) {
           let direction = null
 
@@ -808,24 +899,24 @@ const Experience = () => {
             const next_room = active_room.adjacent_blocks.find(block => block.direction === direction)
 
             if (next_room) {
-              console.clear()
-
               const next_index = next_room.index
 
               // CHECK FOR KEY TO FLOOR BOSS ROOM
               if (next_index === active_level.room_end.index) {
                 if (player_data.key) {
+                  ref_log.current.text = 'ENTERING THE BOSS ROOM...'
                   player_data.key = false
                   active_room = active_level.rooms[next_index]
                   animateRoom()
                 }
                 else {
-                  console.log('YOU NEED A KEY TO OPEN THIS DOOR')
+                  ref_log.current.text = 'YOU NEED A KEY TO OPEN THIS DOOR'
                 }
               }
 
               // NO KEY REQUIRED FOR OTHER ROOMS
               else {
+                ref_log.current.text = '...'
                 active_room = active_level.rooms[next_index]
                 animateRoom()
               }
@@ -833,7 +924,7 @@ const Experience = () => {
 
             // UNDEFINED OR NOT AN INTEGER TO ANOTHER ROOM. IF CURRENTLY IN THE FLOOR BOSS ROOM MOVE TO NEXT FLOOR
             else if (active_room.index === active_level.room_end.index) {
-              console.log('MOVE TO NEXT FLOOR')
+              ref_log.current.text = 'MOVE TO THE NEXT FLOOR'
               player_data.floor_index++
               ref_stats.floor.current.text = `FLOOR: ${player_data.floor_index}`
 
@@ -848,8 +939,7 @@ const Experience = () => {
                 }
               )
 
-              console.clear()
-              console.log('*** NEXT LEVEL ***')
+              // INTENTIONALLY LOGGING THE LEVEL DATA TO THE CONSOLE
               console.log('LEVEL', active_level)
 
               active_room = active_level.rooms[active_level.room_start.index]
@@ -858,6 +948,7 @@ const Experience = () => {
           }
         }
 
+        // ROLL DICE (COMBAT)
         else if (game_phase === GAME_PHASE.COMBAT) {
           if (keys.ROLL_DICE && dice_enabled && dice_ready) {
             rollCombat()
@@ -867,7 +958,7 @@ const Experience = () => {
     )
   }, [game_phase])
 
-  // GAME PHASE
+  // SET GAME PHASE
   useEffect(() => {
     if (is_build_complete) {
       if (animation_sign.visible) {
@@ -948,6 +1039,7 @@ const Experience = () => {
           game_phase={game_phase}
           aspect_ratio={aspect_ratio}
           data={active_room?.monster}
+          inner_refs={ref_enemy_info}
         />
       </Suspense>
 
@@ -970,7 +1062,32 @@ const Experience = () => {
       <Suspense fallback={null}>
         <Keys game_phase={game_phase} />
       </Suspense>
+
+      <Text
+        ref={ref_log}
+        font={FILE_FONT_BEBAS_NEUE}
+        color={'#2e8fff'}
+        scale={0.025}
+        anchorX={'left'}
+        anchorY={'bottom'}
+        position={[-0.4 * aspect_ratio, -0.32, 0]}
+        visible={[GAME_PHASE.STANDBY, GAME_PHASE.MOVEMENT, GAME_PHASE.COMBAT].includes(game_phase)}
+        text = {'THE ADVENTURE BEGINS...'}
+      />
     </ScreenSpace>
+
+    {/*
+      DOOR INDICATOR (LOCKED, NEW FLOOR (SKULL), PREVIOUS FLOOR (BLOCKED - X))
+      - ONLY ONE DOOR INDICATOR PER ANY ROOM SHOULD BE NECESSARY
+      */}
+    <Suspense fallback={null}>
+      <Image
+        ref={ref_door_indicator}
+        visible={false}
+        transparent
+        url={door_indicator_default_url}
+      />
+    </Suspense>
 
     <Physics
       debug={controls_physics.debug}

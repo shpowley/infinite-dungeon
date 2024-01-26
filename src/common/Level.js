@@ -5,8 +5,8 @@ const FLOOR_ITEMS = {
   HEALTH_POTION: {
     type: ITEM_KEYS.HEALTH_POTION,
     name: 'Health Potion',
-    description: 'Restores 10 health points.',
-    value: 10,
+    description: 'Restores 20 health points.',
+    value: 20,
   },
   TREASURE_CHEST: {
     type: ITEM_KEYS.TREASURE_CHEST,
@@ -23,7 +23,7 @@ const FLOOR_ITEMS = {
 
 const FLOOR_TEMPLATE = {
   index: null,
-  items: [FLOOR_ITEMS.HEALTH_POTION, FLOOR_ITEMS.TREASURE_CHEST],
+  items: [FLOOR_ITEMS.KEY, FLOOR_ITEMS.HEALTH_POTION, FLOOR_ITEMS.TREASURE_CHEST],
   monsters: [MONSTERS.DEATH_KNIGHT],
   boss: MONSTERS.DEATH_KNIGHT
 }
@@ -57,7 +57,7 @@ const FLOOR_DATA = new Array(FLOOR_MAX)
         break
 
       case 3:
-        new_floor.items = [FLOOR_ITEMS.KEY]
+        new_floor.items = [FLOOR_ITEMS.HEALTH_POTION, FLOOR_ITEMS.KEY]
         new_floor.monsters = [MONSTERS.BLUE_SLIME, MONSTERS.GREEN_SLIME, MONSTERS.RAT]
         new_floor.boss = MONSTERS.RAT
         break
@@ -635,4 +635,4 @@ const generateLevel = (level_number, prior_room) => {
   return level
 }
 
-export { generateLevel }
+export { FLOOR_ITEMS, generateLevel }

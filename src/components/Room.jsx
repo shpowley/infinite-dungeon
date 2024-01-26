@@ -353,20 +353,12 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
   }, [animation_props])
 
   return <>
+    {/* ROOM */}
     <Wall
       id='NORTH'
       position={[0, ROOM_COLLIDER.wall_position_y, -dimension]}
       visible={!walls_hidden.NORTH}
       animation_props={animation_props_north}
-    />
-
-    <Image
-      url={HUDImages.DIRECTION_NORTH.path}
-      transparent
-      position={[0, 0.2, -6]}
-      rotation={[-Math.PI * 0.5, 0, 0]}
-      scale={HUDImages.DIRECTION_NORTH.scale}
-      visible={animation_props_north.visible && animation_props_north.door_visible}
     />
 
     <Wall
@@ -375,6 +367,35 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       rotation={[0, Math.PI, 0]}
       visible={!walls_hidden.SOUTH}
       animation_props={animation_props_south}
+    />
+
+    <Wall
+      id='EAST'
+      position={[dimension, ROOM_COLLIDER.wall_position_y, 0]}
+      rotation={[0, -Math.PI * 0.5, 0]}
+      visible={!walls_hidden.EAST}
+      animation_props={animation_props_east}
+    />
+
+    <Wall
+      id='WEST'
+      position={[-dimension, ROOM_COLLIDER.wall_position_y, 0]}
+      rotation={[0, Math.PI * 0.5, 0]}
+      visible={!walls_hidden.WEST}
+      animation_props={animation_props_west}
+    />
+
+    <Ceiling />
+    <Floor />
+
+    {/* FLOOR DIRECTIONAL ARROWS */}
+    <Image
+      url={HUDImages.DIRECTION_NORTH.path}
+      transparent
+      position={[0, 0.2, -6]}
+      rotation={[-Math.PI * 0.5, 0, 0]}
+      scale={HUDImages.DIRECTION_NORTH.scale}
+      visible={animation_props_north.visible && animation_props_north.door_visible}
     />
 
     <Image
@@ -386,14 +407,6 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       visible={animation_props_north.visible && animation_props_south.door_visible}
     />
 
-    <Wall
-      id='EAST'
-      position={[dimension, ROOM_COLLIDER.wall_position_y, 0]}
-      rotation={[0, -Math.PI * 0.5, 0]}
-      visible={!walls_hidden.EAST}
-      animation_props={animation_props_east}
-    />
-
     <Image
       url={HUDImages.DIRECTION_EAST.path}
       transparent
@@ -401,14 +414,6 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       rotation={[-Math.PI * 0.5, 0, -Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_EAST.scale}
       visible={animation_props_north.visible && animation_props_east.door_visible}
-    />
-
-    <Wall
-      id='WEST'
-      position={[-dimension, ROOM_COLLIDER.wall_position_y, 0]}
-      rotation={[0, Math.PI * 0.5, 0]}
-      visible={!walls_hidden.WEST}
-      animation_props={animation_props_west}
     />
 
     <Image
@@ -419,9 +424,6 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       scale={HUDImages.DIRECTION_WEST.scale}
       visible={animation_props_north.visible && animation_props_west.door_visible}
     />
-
-    <Ceiling />
-    <Floor />
   </>
 })
 

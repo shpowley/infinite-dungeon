@@ -1,5 +1,6 @@
 const
   HUD_IMAGE_PATH = './images/hud/',
+  SCALE_DEFAULT = [1, 1],
   SCALE_DIRECTION = [1.5, 2.16],
   SCALE_POTION = [1.2, 1],
   SCALE_ROLL = [3.24, 1]
@@ -7,6 +8,7 @@ const
 const HUDImages = {
   BLOCK: {
     path: HUD_IMAGE_PATH + 'block.webp',
+    scale: SCALE_DEFAULT
   },
 
   COINS: {
@@ -16,6 +18,7 @@ const HUDImages = {
 
   COPYRIGHT: {
     path: HUD_IMAGE_PATH + 'copyright.webp',
+    scale: SCALE_DEFAULT
   },
 
   DIRECTION_EAST: {
@@ -40,18 +43,22 @@ const HUDImages = {
 
   DISABLED_BUTTON_EAST: {
     path: HUD_IMAGE_PATH + 'disabled-east.webp',
+    scale: SCALE_DEFAULT
   },
 
   DISABLED_BUTTON_NORTH: {
     path: HUD_IMAGE_PATH + 'disabled-north.webp',
+    scale: SCALE_DEFAULT
   },
 
   DISABLED_BUTTON_SOUTH: {
     path: HUD_IMAGE_PATH + 'disabled-south.webp',
+    scale: SCALE_DEFAULT
   },
 
   DISABLED_BUTTON_WEST: {
     path: HUD_IMAGE_PATH + 'disabled-west.webp',
+    scale: SCALE_DEFAULT
   },
 
   DISABLED_POTION: {
@@ -66,6 +73,7 @@ const HUDImages = {
 
   EXIT: {
     path: HUD_IMAGE_PATH + 'exit.webp',
+    scale: [1.6, 1.6]
   },
 
   HEART: {
@@ -80,18 +88,22 @@ const HUDImages = {
 
   KEY_EAST: {
     path: HUD_IMAGE_PATH + 'key-east.webp',
+    scale: SCALE_DEFAULT
   },
 
   KEY_NORTH: {
     path: HUD_IMAGE_PATH + 'key-north.webp',
+    scale: SCALE_DEFAULT
   },
 
   KEY_SOUTH: {
     path: HUD_IMAGE_PATH + 'key-south.webp',
+    scale: SCALE_DEFAULT
   },
 
   KEY_WEST: {
     path: HUD_IMAGE_PATH + 'key-west.webp',
+    scale: SCALE_DEFAULT
   },
 
   KEY_POTION: {
@@ -106,10 +118,12 @@ const HUDImages = {
 
   LOCK: {
     path: HUD_IMAGE_PATH + 'lock.webp',
+    scale: SCALE_DEFAULT
   },
 
   MONSTER: {
     path: HUD_IMAGE_PATH + 'monster.webp',
+    scale: [1.3, 1.48]
   },
 
   POTIONS: {
@@ -119,6 +133,7 @@ const HUDImages = {
 
   RED_X: {
     path: HUD_IMAGE_PATH + 'red-x.webp',
+    scale: SCALE_DEFAULT
   },
 
   SWORD: {
