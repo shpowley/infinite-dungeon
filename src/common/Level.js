@@ -220,6 +220,21 @@ const ROOM_TEMPLATE = {
   },
 }
 
+const VALID_PERIMETER_ROOMS = {
+  0: [3, 7, 11, 12, 13, 14, 15],
+  1: [12, 13, 14, 15],
+  2: [12, 13, 14, 15],
+  3: [0, 4, 8, 12, 13, 14, 15],
+  4: [3, 7, 11, 15],
+  7: [0, 4, 8, 12],
+  8: [3, 7, 11, 15],
+  11: [0, 4, 8, 12],
+  12: [0, 1, 2, 3, 7, 11, 15],
+  13: [0, 1, 2, 3],
+  14: [0, 1, 2, 3],
+  15: [0, 1, 2, 3, 4, 8, 12]
+}
+
 const PERIMETER_ROOMS = [
   { index: 0, walls: [DIRECTION.N, DIRECTION.W] },   // top left corner
   { index: 1, walls: [DIRECTION.N] },                // top row
@@ -512,43 +527,72 @@ const createRoom = (level, index) => {
 
 // randomly generates rooms
 const generateRooms = (floor_number, prior_room) => {
+  let
+    start_room_index,
+    end_room_index,
+    rooms,
+    is_end_room_connected = false,
+    map_attempts = 1
 
-  // reset visited blocks and next blocks
-  visited_blocks = []
-  next_blocks = []
+  while (!is_end_room_connected) {
+    // reset visited blocks and next blocks
+    visited_blocks = []
+    next_blocks = []
 
-  // copy the level starter template
-  const rooms = [...LEVEL_TEMPLATE]
+    // copy the level starter template
+    rooms = [...LEVEL_TEMPLATE]
 
-  // randomly determine the start room, unless it's the first level
-  const start_room_index = prior_room
-    ? prior_room.index
-    : PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
+    // randomly determine the start room, unless it's the first level
+    start_room_index = prior_room
+      ? prior_room.index
+      : PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
 
-  // randomly determine the end room
-  const blocked_indices = [start_room_index, ...rooms[start_room_index].adjacent_blocks.map(block => block.index)]
-  let end_room_index = PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
+    // pick a random room from the list of valid perimeter rooms
+    end_room_index = VALID_PERIMETER_ROOMS[start_room_index][Math.floor(Math.random() * VALID_PERIMETER_ROOMS[start_room_index].length)]
 
-  while (blocked_indices.includes(end_room_index)) {
-    end_room_index = PERIMETER_ROOMS[Math.floor(Math.random() * PERIMETER_ROOMS.length)].index
-  }
+    createStartRoom(rooms, start_room_index, prior_room)
+    visited_blocks.push(start_room_index)
 
-  createStartRoom(rooms, start_room_index, prior_room)
-  visited_blocks.push(start_room_index)
+    createEndRoom(rooms, end_room_index, floor_number)
+    visited_blocks.push(end_room_index)
 
-  createEndRoom(rooms, end_room_index, floor_number)
-  visited_blocks.push(end_room_index)
+    // create rooms
+    while (next_blocks.length > 0) {
+      const block_index = next_blocks.shift()
 
-  // create rooms
-  while (next_blocks.length > 0) {
-    const block_index = next_blocks.shift()
+      if (visited_blocks.includes(block_index)) {
+        continue
+      }
 
-    if (visited_blocks.includes(block_index)) {
-      continue
+      visited_blocks.push(block_index)
+      createRoom(rooms, block_index)
     }
 
-    visited_blocks.push(block_index)
-    createRoom(rooms, block_index)
+    // BUG FIX? -- make sure the end room has a room connected to it
+    let required_block = null
+
+    const
+      end_room = rooms[end_room_index],
+      adjacent_rooms = end_room.adjacent_blocks
+
+    for (let i = 0; i < end_room.adjacent_blocks.length; i++) {
+      required_block = rooms[adjacent_rooms[i].index]
+
+      if (end_room.doors[adjacent_rooms[i].direction]) {
+        if (required_block.is_room) {
+          is_end_room_connected = true
+        }
+      }
+    }
+
+    if (!is_end_room_connected) {
+      console.log(`end room (index: ${end_room_index}) NOT CONNECTED to required block (index: ${required_block.index}) - re-calculating..`)
+      map_attempts++
+    }
+  }
+
+  if (map_attempts > 1) {
+    console.log(`map calculation attempts: ${map_attempts}`)
   }
 
   return {
@@ -581,13 +625,6 @@ const getFloorData = (floor_number) => {
 //   - index: the index of the room (0-15)
 //   - level_door: the direction of the door to the next level ('N', 'S', 'E', 'W')
 const generateLevel = (level_number, prior_room) => {
-
-  // DEBUG ROOM
-  // const exit_room_debug = {
-  //   index: 7,
-  //   level_door: 'E'
-  // }
-
   let
     level = null,
     room_count = 0,
