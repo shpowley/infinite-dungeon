@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useImperativeHandle, useRef, useState } from "react"
 import * as THREE from 'three'
 import { useAnimations, useGLTF } from "@react-three/drei"
 import { CylinderCollider, RigidBody } from "@react-three/rapier"
 import { useSpring, animated } from '@react-spring/three'
-import { button, useControls } from 'leva'
+import { useControls } from 'leva'
 import { ANIMATION_DEFAULTS, LEVA_SORT_ORDER } from "../common/Constants"
 
 const FILE_WARRIOR = './models/warrior-compressed.glb'
@@ -23,7 +23,15 @@ const MESH_ANIMATIONS = {
   RUN: 'run.f',
 }
 
-const Warrior = ({ castShadow = false, position, rotation, scale, animation_props = { ...ANIMATION_DEFAULTS }, onConstructComplete }) => {
+const Warrior = ({
+  castShadow = false,
+  position,
+  rotation,
+  scale,
+  animation_props = { ...ANIMATION_DEFAULTS },
+  inner_ref,
+  onConstructComplete
+}) => {
   const ref_mesh_group = useRef()
 
   const
@@ -86,10 +94,10 @@ const Warrior = ({ castShadow = false, position, rotation, scale, animation_prop
   )
 
   const handleMeshAnimation = (animation) => {
-    if (mesh_animation !== MESH_ANIMATIONS.NONE) {
+    // if (mesh_animation !== MESH_ANIMATIONS.NONE) {
       actions[mesh_animation]?.fadeOut(0.5).stop()
       actions[mesh_animation]?.reset()
-    }
+    // }
 
     switch (animation) {
       case MESH_ANIMATIONS.SLASH:
@@ -122,6 +130,8 @@ const Warrior = ({ castShadow = false, position, rotation, scale, animation_prop
       animateWarrior()
     }
   }, [animation_props])
+
+  useImperativeHandle(inner_ref, () => ({ handleMeshAnimation }))
 
   return <>
     <RigidBody
@@ -156,4 +166,5 @@ const Warrior = ({ castShadow = false, position, rotation, scale, animation_prop
   </>
 }
 
+export { MESH_ANIMATIONS }
 export default Warrior

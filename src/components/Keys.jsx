@@ -4,8 +4,8 @@ import { GAME_PHASE, KEYBOARD } from "../common/Constants"
 
 const Keys = ({
   game_phase = GAME_PHASE.START,
-  pos_x = -0.065,
-  pos_y = -0.33,
+  pos_x = -0.06,
+  pos_y = -0.34,
   scale = 0.04,
   onClick
 }) => {
@@ -27,6 +27,9 @@ const Keys = ({
           onClick(KEYBOARD.NORTH)
         }
       }}
+
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'default'}
     />
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_SOUTH.path : HUDImages.KEY_SOUTH.path}
@@ -38,6 +41,9 @@ const Keys = ({
           onClick(KEYBOARD.SOUTH)
         }
       }}
+
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'default'}
     />
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_EAST.path : HUDImages.KEY_EAST.path}
@@ -49,6 +55,9 @@ const Keys = ({
           onClick(KEYBOARD.EAST)
         }
       }}
+
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'default'}
     />
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_WEST.path : HUDImages.KEY_WEST.path}
@@ -60,6 +69,9 @@ const Keys = ({
           onClick(KEYBOARD.WEST)
         }
       }}
+
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'default'}
     />
     <Image
       url={in_combat ? HUDImages.KEY_ROLL.path : HUDImages.DISABLED_ROLL.path}
@@ -72,6 +84,9 @@ const Keys = ({
           onClick(KEYBOARD.ROLL_DICE)
         }
       }}
+
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'default'}
     />
     <Image
       url={HUDImages.KEY_POTION.path}
@@ -79,6 +94,9 @@ const Keys = ({
       position={[2.48, 0, 0]}
       scale={HUDImages.KEY_POTION.scale}
       onClick={() => onClick(KEYBOARD.POTION)}
+
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'default'}
     />
   </group>
 }

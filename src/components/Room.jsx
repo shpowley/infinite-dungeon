@@ -266,6 +266,13 @@ const Room = memo(({
 
   const dimension = ROOM_EXTENTS.width + THICKNESS_EXTENT
 
+  const arrow_visible = {
+    NORTH: animation_props_north.visible && animation_props_north.door_visible,
+    SOUTH: animation_props_south.visible && animation_props_south.door_visible,
+    EAST: animation_props_east.visible && animation_props_east.door_visible,
+    WEST: animation_props_west.visible && animation_props_west.door_visible
+  }
+
   room_receive_shadow = receiveShadow
 
   // COMMENT: REASON FOR THE CAMERA ANGLE CALCULATION LOGIC
@@ -405,8 +412,10 @@ const Room = memo(({
       position={[0, 0.2, -6]}
       rotation={[-Math.PI * 0.5, 0, 0]}
       scale={HUDImages.DIRECTION_NORTH.scale}
-      visible={animation_props_north.visible && animation_props_north.door_visible}
+      visible={arrow_visible.NORTH}
       onClick={() => onDirectionClick(KEYBOARD.NORTH)}
+      onPointerOver={() => { arrow_visible.NORTH ? document.body.style.cursor = 'pointer' : null }}
+      onPointerOut={() => { arrow_visible.NORTH ? document.body.style.cursor = 'default' : null }}
     />
 
     <Image
@@ -415,8 +424,10 @@ const Room = memo(({
       position={[0, 0.2, 6]}
       rotation={[-Math.PI * 0.5, 0, Math.PI]}
       scale={HUDImages.DIRECTION_SOUTH.scale}
-      visible={animation_props_north.visible && animation_props_south.door_visible}
+      visible={arrow_visible.SOUTH}
       onClick={() => onDirectionClick(KEYBOARD.SOUTH)}
+      onPointerOver={() => { arrow_visible.SOUTH ? document.body.style.cursor = 'pointer' : null }}
+      onPointerOut={() => { arrow_visible.SOUTH ? document.body.style.cursor = 'default' : null }}
     />
 
     <Image
@@ -425,8 +436,10 @@ const Room = memo(({
       position={[6, 0.2, 0]}
       rotation={[-Math.PI * 0.5, 0, -Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_EAST.scale}
-      visible={animation_props_north.visible && animation_props_east.door_visible}
+      visible={arrow_visible.EAST}
       onClick={() => onDirectionClick(KEYBOARD.EAST)}
+      onPointerOver={() => { arrow_visible.EAST ? document.body.style.cursor = 'pointer' : null }}
+      onPointerOut={() => { arrow_visible.EAST ? document.body.style.cursor = 'default' : null }}
     />
 
     <Image
@@ -435,8 +448,10 @@ const Room = memo(({
       position={[-6, 0.2, 0]}
       rotation={[-Math.PI * 0.5, 0, Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_WEST.scale}
-      visible={animation_props_north.visible && animation_props_west.door_visible}
+      visible={arrow_visible.WEST}
       onClick={() => onDirectionClick(KEYBOARD.WEST)}
+      onPointerOver={() => { arrow_visible.WEST ? document.body.style.cursor = 'pointer' : null }}
+      onPointerOut={() => { arrow_visible.WEST ? document.body.style.cursor = 'default' : null }}
     />
   </>
 })

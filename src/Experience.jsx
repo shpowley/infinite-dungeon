@@ -10,7 +10,7 @@ import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
-import Warrior from './components/Warrior'
+import Warrior, { MESH_ANIMATIONS } from './components/Warrior'
 import Sign from './components/Sign'
 import { FLOOR_ITEMS, generateLevel } from './common/Level'
 import D20Enemy from './components/D20Enemy'
@@ -55,7 +55,6 @@ let show_perf = (parameterEnabled('PERF') || parameterEnabled('perf'))
 let
   active_level = null,
   active_room = null,
-  is_build_complete = false,
   player_data = null,
   door_indicator_default_url = HUDImages.RED_X.path,
 
@@ -64,13 +63,7 @@ let
   is_player_rolling = false,
   dice_roll_player = null,
   is_enemy_rolling = false,
-  dice_roll_enemy = null,
-
-  animation_room = ROOM_ANIMATION_DEFAULTS
-  // animation_warrior = ANIMATION_DEFAULTS,
-  // animation_sign = SIGN_PROPS_DEFAULT,
-  // dice_enabled = false,
-  // game_phase = GAME_PHASE.START
+  dice_roll_enemy = null
 
 const Experience = () => {
   const
@@ -79,6 +72,7 @@ const Experience = () => {
     ref_shadow_camera = useRef(),
     ref_d20 = useRef(),
     ref_d20_enemy = useRef(),
+    ref_warrior = useRef(),
     ref_door_indicator = useRef(),
     ref_log = useRef(),
 
@@ -95,12 +89,12 @@ const Experience = () => {
     },
 
     ref_stats = {
-      floor: useRef(),
-      kills: useRef()
+      floor: useRef()
     }
 
   const
-    // [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
+    [is_build_complete, setIsBuildComplete] = useState(false),
+    [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(SIGN_PROPS_DEFAULT),
     [dice_enabled, setDiceEnabled] = useState(false),
@@ -360,6 +354,7 @@ const Experience = () => {
           },
           'teleport to room': button(() => {
             active_room = active_level.rooms[leva_dungeon_info.room_select]
+            active_room.visited = true
             animateRoom()
           }),
         },
@@ -409,6 +404,7 @@ const Experience = () => {
 
     const room_start_index = active_level.room_start.index
     active_room = active_level.rooms[room_start_index]
+    active_room.visited = true
 
     // reset player info
     player_data = {
@@ -520,7 +516,7 @@ const Experience = () => {
       console.warn('SELECTED BLOCK IS NOT A ROOM')
     }
 
-    is_build_complete = false
+    setIsBuildComplete(false)
     setGamePhase(GAME_PHASE.STANDBY)
 
     // --- DECONSTRUCTION PHASE ---
@@ -561,6 +557,8 @@ const Experience = () => {
 
         setTimeout(() => {
           if (animation_warrior.visible) {
+            ref_warrior.current.handleMeshAnimation(MESH_ANIMATIONS.NONE)
+
             setAnimationWarrior({
               animate: true,
               visible: false
@@ -578,16 +576,11 @@ const Experience = () => {
         }
 
         setTimeout(() => {
-          animation_room = {
+          setAnimationRoom({
             ...ROOM_ANIMATION_DEFAULTS,
             animate: true,
             visible: false
-          }
-          // setAnimationRoom({
-          //   ...ROOM_ANIMATION_DEFAULTS,
-          //   animate: true,
-          //   visible: false
-          // })
+          })
 
           clearDoorIndicator()
         }, delay)
@@ -605,7 +598,7 @@ const Experience = () => {
       }
 
       setTimeout(() => {
-        animation_room = ({
+        setAnimationRoom({
           animate: true,
           visible: true,
           delay: 0,
@@ -617,19 +610,6 @@ const Experience = () => {
             W: active_room.doors?.W ?? false,
           }
         })
-
-        // setAnimationRoom({
-        //   animate: true,
-        //   visible: true,
-        //   delay: 0,
-
-        //   doors: {
-        //     N: active_room.doors?.N ?? false,
-        //     S: active_room.doors?.S ?? false,
-        //     E: active_room.doors?.E ?? false,
-        //     W: active_room.doors?.W ?? false,
-        //   }
-        // })
 
         updateDoorIndicator()
       }, delay)
@@ -678,13 +658,15 @@ const Experience = () => {
 
       ref_log.current.text = 'ROLLING THE DICE...'
 
+      ref_warrior.current.handleMeshAnimation(MESH_ANIMATIONS.NONE)
+
       setTimeout(() => {
         ref_d20.current.rollD20()
-      }, 500)
+      }, Math.random() * 500)
 
       setTimeout(() => {
         ref_d20_enemy.current.rollD20()
-      }, 600)
+      }, Math.random() * 500)
     }
   }
 
@@ -730,6 +712,8 @@ const Experience = () => {
         // PLAYER WINS COMBAT ROUND
         else if (dice_roll_player > dice_roll_enemy) {
 
+          ref_warrior.current.handleMeshAnimation(MESH_ANIMATIONS.SLASH)
+
           // CRITICAL HIT or BASE ATTACK
           attack = dice_roll_player === 20 ? player_data.attack * 2 : player_data.attack
 
@@ -749,13 +733,14 @@ const Experience = () => {
           log_text += `\n${active_room.monster.label} TAKES ${damage} DAMAGE`
 
           if (active_room.monster.health <= 0) {
+            ref_warrior.current.handleMeshAnimation(MESH_ANIMATIONS.NONE)
+
             log_text += `\nMONSTER DEFEATED!`
 
             player_data.kill_count++
-            ref_stats.kills.current.text = `KILL COUNT: ${player_data.kill_count}`
 
             if (active_room.item) {
-              log_text += `\n${active_room.item.name} - ${active_room.item.description} FOUND!`
+              log_text += `\n${active_room.item.name} FOUND!`
 
               switch (active_room.item.type) {
                 case ITEM_KEYS.HEALTH_POTION:
@@ -798,6 +783,8 @@ const Experience = () => {
         // MONSTER WINS COMBAT ROUND
         else {
 
+          ref_warrior.current.handleMeshAnimation(MESH_ANIMATIONS.BLOCK)
+
           // CRITICAL HIT or BASE ATTACK
           attack = dice_roll_enemy === 20 ? active_room.monster.attack * 2 : active_room.monster.attack
 
@@ -833,14 +820,6 @@ const Experience = () => {
   }
 
   const controlsHandler = command => {
-    adjustGamePhase()
-
-    console.log('command', command)
-    console.log('game_phase', game_phase)
-    console.log('is_build_complete', is_build_complete)
-    console.log('animation_sign.visible', animation_sign.visible)
-    console.log('animation_room.visible', animation_room.visible)
-
     // DUNGEON MOVEMENT
     switch (command) {
       case KEYBOARD.NORTH:
@@ -879,6 +858,7 @@ const Experience = () => {
                   ref_log.current.text = 'ENTERING THE BOSS ROOM...'
                   player_data.key = false
                   active_room = active_level.rooms[next_index]
+                  active_room.visited = true
                   animateRoom()
                 }
                 else {
@@ -890,6 +870,7 @@ const Experience = () => {
               else {
                 ref_log.current.text = '...'
                 active_room = active_level.rooms[next_index]
+                active_room.visited = true
                 animateRoom()
               }
             }
@@ -915,6 +896,7 @@ const Experience = () => {
               console.log('LEVEL', active_level)
 
               active_room = active_level.rooms[active_level.room_start.index]
+              active_room.visited = true
               animateRoom()
             }
           }
@@ -953,7 +935,7 @@ const Experience = () => {
   }
 
   const handleWarriorConstructComplete = () => {
-    is_build_complete = true
+    setIsBuildComplete(true)
   }
 
   const adjustGamePhase = () => {
@@ -1029,18 +1011,20 @@ const Experience = () => {
         }
       }
     )
-  }, [])
+  }, [game_phase, is_build_complete, animation_sign, animation_room, dice_enabled])
 
   // SET GAME PHASE
-  // useEffect(() => {
-  //   adjustGamePhase()
-  // }, [animation_room, animation_sign, is_build_complete])
+  useEffect(() => {
+    adjustGamePhase()
+  }, [animation_room, animation_sign, is_build_complete])
 
   return <>
 
     {show_perf && <Perf position='top-left' />}
 
     <Environment preset='sunset' />
+
+    <color attach="background" args={['#6c323d']} />
 
     <OrbitControls
       ref={ref_orbit_controls}
@@ -1100,16 +1084,18 @@ const Experience = () => {
           game_phase={game_phase}
           aspect_ratio={aspect_ratio}
           data={player_data}
+          level_data={active_level}
+          current_room={active_room}
           inner_refs={ref_stats}
         />
       </Suspense>
 
-      <Suspense fallback={null}>
+      {game_phase === GAME_PHASE.START &&
         <TitleDialog
           visible={game_phase === GAME_PHASE.START}
           onClick={newGame}
         />
-      </Suspense>
+      }
 
       <Suspense fallback={null}>
         <Keys
@@ -1125,7 +1111,7 @@ const Experience = () => {
         scale={0.025}
         anchorX={'left'}
         anchorY={'bottom'}
-        position={[-0.4 * aspect_ratio, -0.32, 0]}
+        position={[-0.4 * aspect_ratio, -0.3, 0]}
         visible={[GAME_PHASE.STANDBY, GAME_PHASE.MOVEMENT, GAME_PHASE.COMBAT].includes(game_phase)}
         text={'THE ADVENTURE BEGINS...'}
       />
@@ -1149,6 +1135,7 @@ const Experience = () => {
       gravity={[0, -9.81, 0]}
     >
       <Warrior
+        inner_ref={ref_warrior}
         castShadow
         position={[1.5, 0.8, 1.5]}
         rotation={[0, -Math.PI * 0.75, 0]}

@@ -211,6 +211,7 @@ const BLOCK_TEMPLATE = {
 
 // monsters and items added as needed
 const ROOM_TEMPLATE = {
+  visited: false,
   doors: {
     N: false,
     E: false,
@@ -630,7 +631,7 @@ const generateLevel = (level_number, prior_room) => {
     })
 
   // place the boss in the end room
-  level.rooms[level.room_end.index].monster = floor_data.boss
+  level.rooms[level.room_end.index].monster = { ...floor_data.boss }
 
   return level
 }

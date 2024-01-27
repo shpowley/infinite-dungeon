@@ -93,13 +93,13 @@ const D20 = memo(({ castShadow = false, position, enabled = false, inner_ref, on
 
     // apply a random force and spin
     ref_d20_body.current.applyImpulse({
-      x: scaling * randomFloat(-80, 80), // left/right force
-      y: scaling * randomFloat(50, 60), // upward force
-      z: scaling * randomFloat(-80, 80) // forward force
+      x: scaling * randomFloat(-50, 50), // left/right force
+      y: scaling * randomFloat(60, 70), // upward force
+      z: scaling * randomFloat(-50, 50) // forward force
     }, true)
 
     ref_d20_body.current.applyTorqueImpulse({
-      x: randomFloat(-10, -5), // forward spin
+      x: randomFloat(5, -5), // forward spin
       y: 0,
       z: randomFloat(-10, 10) // left/right spin
     }, true)

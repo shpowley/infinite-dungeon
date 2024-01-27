@@ -6,7 +6,6 @@ import HUDImages from "../common/HUDImages"
 const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data, inner_refs }) => {
   const
     controls_visible = game_phase === GAME_PHASE.COMBAT,
-    // controls_visible = true,
     text_color = 'black'
 
   return <group
