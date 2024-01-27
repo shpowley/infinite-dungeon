@@ -4,7 +4,7 @@ import { CuboidCollider, RigidBody } from "@react-three/rapier"
 import { useSpring, animated } from '@react-spring/three'
 
 import Door from './Door'
-import { ANIMATION_DEFAULTS } from '../common/Constants'
+import { ANIMATION_DEFAULTS, KEYBOARD } from '../common/Constants'
 import { Image } from '@react-three/drei'
 import HUDImages from '../common/HUDImages'
 
@@ -87,7 +87,12 @@ const ROOM_ANIMATION_DEFAULTS = {
  *  delay:
  *    the delay of the wall animation (react-spring)
  */
-const Wall = memo(({ position, rotation, visible = true, animation_props = { ...WALL_ANIMATION_DEFAULTS } }) => {
+const Wall = memo(({
+  position,
+  rotation,
+  visible = true,
+  animation_props = { ...WALL_ANIMATION_DEFAULTS },
+}) => {
   const
     ref_mesh_group = useRef(),
     ref_mesh_door = useRef()
@@ -220,7 +225,12 @@ const Ceiling = memo(() => {
   </RigidBody>
 })
 
-const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props = { ...ROOM_ANIMATION_DEFAULTS } }) => {
+const Room = memo(({
+  receiveShadow = false,
+  ref_orbit_controls,
+  animation_props = { ...ROOM_ANIMATION_DEFAULTS },
+  onDirectionClick
+}) => {
   let camera = null
 
   const
@@ -396,6 +406,7 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       rotation={[-Math.PI * 0.5, 0, 0]}
       scale={HUDImages.DIRECTION_NORTH.scale}
       visible={animation_props_north.visible && animation_props_north.door_visible}
+      onClick={() => onDirectionClick(KEYBOARD.NORTH)}
     />
 
     <Image
@@ -405,6 +416,7 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       rotation={[-Math.PI * 0.5, 0, Math.PI]}
       scale={HUDImages.DIRECTION_SOUTH.scale}
       visible={animation_props_north.visible && animation_props_south.door_visible}
+      onClick={() => onDirectionClick(KEYBOARD.SOUTH)}
     />
 
     <Image
@@ -414,6 +426,7 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       rotation={[-Math.PI * 0.5, 0, -Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_EAST.scale}
       visible={animation_props_north.visible && animation_props_east.door_visible}
+      onClick={() => onDirectionClick(KEYBOARD.EAST)}
     />
 
     <Image
@@ -423,6 +436,7 @@ const Room = memo(({ receiveShadow = false, ref_orbit_controls, animation_props 
       rotation={[-Math.PI * 0.5, 0, Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_WEST.scale}
       visible={animation_props_north.visible && animation_props_west.door_visible}
+      onClick={() => onDirectionClick(KEYBOARD.WEST)}
     />
   </>
 })

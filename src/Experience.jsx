@@ -6,7 +6,7 @@ import { Physics } from '@react-three/rapier'
 import { button, folder, useControls } from "leva"
 import { Perf } from 'r3f-perf'
 
-import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS, GAME_PHASE, FILE_FONT_BEBAS_NEUE } from './common/Constants'
+import { CAMERA_DEFAULTS, ANIMATION_DEFAULTS, LEVA_SORT_ORDER, DICE_OWNER, ITEM_KEYS, GAME_PHASE, FILE_FONT_BEBAS_NEUE, KEYBOARD } from './common/Constants'
 import { parameterEnabled } from './common/Utils'
 import D20 from './components/D20'
 import Room, { ROOM_ANIMATION_DEFAULTS } from './components/Room'
@@ -64,7 +64,13 @@ let
   is_player_rolling = false,
   dice_roll_player = null,
   is_enemy_rolling = false,
-  dice_roll_enemy = null
+  dice_roll_enemy = null,
+
+  animation_room = ROOM_ANIMATION_DEFAULTS
+  // animation_warrior = ANIMATION_DEFAULTS,
+  // animation_sign = SIGN_PROPS_DEFAULT,
+  // dice_enabled = false,
+  // game_phase = GAME_PHASE.START
 
 const Experience = () => {
   const
@@ -94,7 +100,7 @@ const Experience = () => {
     }
 
   const
-    [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
+    // [animation_room, setAnimationRoom] = useState(ROOM_ANIMATION_DEFAULTS),
     [animation_warrior, setAnimationWarrior] = useState(ANIMATION_DEFAULTS),
     [animation_sign, setAnimationSign] = useState(SIGN_PROPS_DEFAULT),
     [dice_enabled, setDiceEnabled] = useState(false),
@@ -572,11 +578,16 @@ const Experience = () => {
         }
 
         setTimeout(() => {
-          setAnimationRoom({
+          animation_room = {
             ...ROOM_ANIMATION_DEFAULTS,
             animate: true,
             visible: false
-          })
+          }
+          // setAnimationRoom({
+          //   ...ROOM_ANIMATION_DEFAULTS,
+          //   animate: true,
+          //   visible: false
+          // })
 
           clearDoorIndicator()
         }, delay)
@@ -594,7 +605,7 @@ const Experience = () => {
       }
 
       setTimeout(() => {
-        setAnimationRoom({
+        animation_room = ({
           animate: true,
           visible: true,
           delay: 0,
@@ -606,6 +617,19 @@ const Experience = () => {
             W: active_room.doors?.W ?? false,
           }
         })
+
+        // setAnimationRoom({
+        //   animate: true,
+        //   visible: true,
+        //   delay: 0,
+
+        //   doors: {
+        //     N: active_room.doors?.N ?? false,
+        //     S: active_room.doors?.S ?? false,
+        //     E: active_room.doors?.E ?? false,
+        //     W: active_room.doors?.W ?? false,
+        //   }
+        // })
 
         updateDoorIndicator()
       }, delay)
@@ -643,10 +667,6 @@ const Experience = () => {
         }, delay)
       }
     }
-
-    setTimeout(() => {
-      is_build_complete = true
-    }, delay)
   }
 
   const rollCombat = () => {
@@ -812,82 +832,38 @@ const Experience = () => {
     }
   }
 
-  // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
-  // save the initial position and rotation of the d20
-  // useEffect(() => {
-  //   if (ref_d20_body.current) {
-  //     d20_start.pos = vec3(ref_d20_body.current.translation())
-  //     d20_start.quaternion = quat(ref_d20_body.current.rotation())
-  //   }
-  // }, [])
+  const controlsHandler = command => {
+    adjustGamePhase()
 
-  // COMMENT: IF NECESSARY, SET STARTING CAMERA TARGET POSITION HERE
-  // useEffect(() => {
-  //   ref_orbit_controls.current.target.set(0, 0, 0)
-  //   ref_orbit_controls.current.update()
-  // }, [])
+    console.log('command', command)
+    console.log('game_phase', game_phase)
+    console.log('is_build_complete', is_build_complete)
+    console.log('animation_sign.visible', animation_sign.visible)
+    console.log('animation_room.visible', animation_room.visible)
 
+    // DUNGEON MOVEMENT
+    switch (command) {
+      case KEYBOARD.NORTH:
+      case KEYBOARD.SOUTH:
+      case KEYBOARD.EAST:
+      case KEYBOARD.WEST:
 
-  // KEYBOARD CONTROLS
-  useEffect(() => {
-    switch (game_phase) {
-      case GAME_PHASE.START:
-        console.log('*** TITLE / GAME START ***')
-        break
-
-      case GAME_PHASE.GAME_OVER:
-        console.log('*** GAME OVER ***')
-        break
-
-      case GAME_PHASE.MOVEMENT:
-        console.log('*** MOVEMENT PHASE ***')
-        break
-
-      case GAME_PHASE.COMBAT:
-        console.log('*** COMBAT START PHASE ***')
-        break
-
-      case GAME_PHASE.STANDBY:
-      default:
-    }
-
-    return sub(
-      state => state,
-
-      keys => {
-
-        // POTION
-        if ((game_phase === GAME_PHASE.COMBAT || game_phase === GAME_PHASE.MOVEMENT) && keys.POTION && player_data.potions > 0) {
-          ref_log.current.text = 'USED A POTION'
-
-          player_data.potions--
-          ref_player_info.potions.current.text = player_data.potions
-
-          player_data.health = Math.min(
-            player_data.health + FLOOR_ITEMS.HEALTH_POTION.value,
-            PLAYER_INFO_DEFAULT.health
-          )
-
-          ref_player_info.health.current.text = `${player_data.health} HP`
-        }
-
-        // MOVEMENT
-        if (game_phase === GAME_PHASE.MOVEMENT) {
+        if (game_phase === GAME_PHASE.MOVEMENT && is_build_complete) {
           let direction = null
 
-          if (keys.NORTH && active_room.doors.N) {
+          if (command === KEYBOARD.NORTH && active_room.doors.N) {
             direction = 'N'
           }
 
-          else if (keys.SOUTH && active_room.doors.S) {
+          else if (command === KEYBOARD.SOUTH && active_room.doors.S) {
             direction = 'S'
           }
 
-          else if (keys.EAST && active_room.doors.E) {
+          else if (command === KEYBOARD.EAST && active_room.doors.E) {
             direction = 'E'
           }
 
-          else if (keys.WEST && active_room.doors.W) {
+          else if (command === KEYBOARD.WEST && active_room.doors.W) {
             direction = 'W'
           }
 
@@ -944,18 +920,43 @@ const Experience = () => {
           }
         }
 
-        // ROLL DICE (COMBAT)
-        else if (game_phase === GAME_PHASE.COMBAT) {
-          if (keys.ROLL_DICE && dice_enabled && dice_ready) {
-            rollCombat()
-          }
-        }
-      }
-    )
-  }, [game_phase])
+        break
 
-  // SET GAME PHASE
-  useEffect(() => {
+      // ROLL DICE (COMBAT)
+      case KEYBOARD.ROLL_DICE:
+        if (game_phase === GAME_PHASE.COMBAT && dice_enabled && dice_ready) {
+          rollCombat()
+        }
+
+        break
+
+      // USE A HEALTH POTION
+      case KEYBOARD.POTION:
+        if ((game_phase === GAME_PHASE.COMBAT || game_phase === GAME_PHASE.MOVEMENT) && player_data.potions > 0) {
+          ref_log.current.text = 'USED A HEALTH POTION'
+
+          player_data.potions--
+          ref_player_info.potions.current.text = player_data.potions
+
+          player_data.health = Math.min(
+            player_data.health + FLOOR_ITEMS.HEALTH_POTION.value,
+            PLAYER_INFO_DEFAULT.health
+          )
+
+          ref_player_info.health.current.text = `${player_data.health} HP`
+        }
+
+        break
+
+      default:
+    }
+  }
+
+  const handleWarriorConstructComplete = () => {
+    is_build_complete = true
+  }
+
+  const adjustGamePhase = () => {
     if (is_build_complete) {
       if (animation_sign.visible) {
         setGamePhase(GAME_PHASE.COMBAT)
@@ -976,7 +977,64 @@ const Experience = () => {
         setGamePhase(GAME_PHASE.STANDBY)
       }
     }
-  }, [animation_room, animation_sign, is_build_complete])
+  }
+
+  // COMMENT: REMOVED, BUT KEEPING FOR REFERENCE FOR PLACEMENT OF OTHER OBJECTS
+  // save the initial position and rotation of the d20
+  // useEffect(() => {
+  //   if (ref_d20_body.current) {
+  //     d20_start.pos = vec3(ref_d20_body.current.translation())
+  //     d20_start.quaternion = quat(ref_d20_body.current.rotation())
+  //   }
+  // }, [])
+
+  // COMMENT: IF NECESSARY, SET STARTING CAMERA TARGET POSITION HERE
+  // useEffect(() => {
+  //   ref_orbit_controls.current.target.set(0, 0, 0)
+  //   ref_orbit_controls.current.update()
+  // }, [])
+
+
+  // KEYBOARD CONTROLS
+  useEffect(() => {
+    return sub(
+      state => state,
+
+      keys => {
+        // ROLL DICE (COMBAT)
+        if (keys.ROLL_DICE) {
+          controlsHandler(KEYBOARD.ROLL_DICE)
+        }
+
+        // MOVEMENT
+        else if (keys.NORTH) {
+          controlsHandler(KEYBOARD.NORTH)
+        }
+
+        else if (keys.SOUTH) {
+          controlsHandler(KEYBOARD.SOUTH)
+        }
+
+        else if (keys.EAST) {
+          controlsHandler(KEYBOARD.EAST)
+        }
+
+        else if (keys.WEST) {
+          controlsHandler(KEYBOARD.WEST)
+        }
+
+        // POTION
+        else if (keys.POTION) {
+          controlsHandler(KEYBOARD.POTION)
+        }
+      }
+    )
+  }, [])
+
+  // SET GAME PHASE
+  // useEffect(() => {
+  //   adjustGamePhase()
+  // }, [animation_room, animation_sign, is_build_complete])
 
   return <>
 
@@ -1018,9 +1076,7 @@ const Experience = () => {
       color={controls_lighting.ambient_color}
     />
 
-    <ScreenSpace
-      depth={1}
-    >
+    <ScreenSpace depth={1} >
       <Suspense fallback={null}>
         <PlayerInfo
           game_phase={game_phase}
@@ -1056,7 +1112,10 @@ const Experience = () => {
       </Suspense>
 
       <Suspense fallback={null}>
-        <Keys game_phase={game_phase} />
+        <Keys
+          game_phase={game_phase}
+          onClick={controlsHandler}
+        />
       </Suspense>
 
       <Text
@@ -1068,7 +1127,7 @@ const Experience = () => {
         anchorY={'bottom'}
         position={[-0.4 * aspect_ratio, -0.32, 0]}
         visible={[GAME_PHASE.STANDBY, GAME_PHASE.MOVEMENT, GAME_PHASE.COMBAT].includes(game_phase)}
-        text = {'THE ADVENTURE BEGINS...'}
+        text={'THE ADVENTURE BEGINS...'}
       />
     </ScreenSpace>
 
@@ -1095,6 +1154,7 @@ const Experience = () => {
         rotation={[0, -Math.PI * 0.75, 0]}
         animation_props={animation_warrior}
         scale={[1.3, 1.3, 1.3]}
+        onConstructComplete={handleWarriorConstructComplete}
       />
 
       <Sign
@@ -1127,6 +1187,7 @@ const Experience = () => {
         receiveShadow
         ref_orbit_controls={ref_orbit_controls}
         animation_props={animation_room}
+        onDirectionClick={controlsHandler}
       />
     </Physics>
   </>

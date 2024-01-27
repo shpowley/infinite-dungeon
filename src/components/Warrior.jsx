@@ -23,7 +23,7 @@ const MESH_ANIMATIONS = {
   RUN: 'run.f',
 }
 
-const Warrior = ({ castShadow = false, position, rotation, scale, animation_props = { ...ANIMATION_DEFAULTS } }) => {
+const Warrior = ({ castShadow = false, position, rotation, scale, animation_props = { ...ANIMATION_DEFAULTS }, onConstructComplete }) => {
   const ref_mesh_group = useRef()
 
   const
@@ -48,6 +48,10 @@ const Warrior = ({ castShadow = false, position, rotation, scale, animation_prop
       }
 
       setIsAnimating(false)
+
+      if (onConstructComplete) {
+        onConstructComplete()
+      }
     }
   }))
 
