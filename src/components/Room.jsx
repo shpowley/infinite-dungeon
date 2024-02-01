@@ -409,6 +409,7 @@ const Room = memo(({
     <Image
       url={HUDImages.DIRECTION_NORTH.path}
       transparent
+      toneMapped={false}
       position={[0, 0.2, -6]}
       rotation={[-Math.PI * 0.5, 0, 0]}
       scale={HUDImages.DIRECTION_NORTH.scale}
@@ -421,6 +422,7 @@ const Room = memo(({
     <Image
       url={HUDImages.DIRECTION_SOUTH.path}
       transparent
+      toneMapped={false}
       position={[0, 0.2, 6]}
       rotation={[-Math.PI * 0.5, 0, Math.PI]}
       scale={HUDImages.DIRECTION_SOUTH.scale}
@@ -433,6 +435,7 @@ const Room = memo(({
     <Image
       url={HUDImages.DIRECTION_EAST.path}
       transparent
+      toneMapped={false}
       position={[6, 0.2, 0]}
       rotation={[-Math.PI * 0.5, 0, -Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_EAST.scale}
@@ -445,6 +448,7 @@ const Room = memo(({
     <Image
       url={HUDImages.DIRECTION_WEST.path}
       transparent
+      toneMapped={false}
       position={[-6, 0.2, 0]}
       rotation={[-Math.PI * 0.5, 0, Math.PI * 0.5]}
       scale={HUDImages.DIRECTION_WEST.scale}

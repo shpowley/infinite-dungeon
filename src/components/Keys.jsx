@@ -21,6 +21,7 @@ const Keys = ({
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_NORTH.path : HUDImages.KEY_NORTH.path}
       transparent
+      toneMapped={false}
 
       onClick={() => {
         if (!in_combat) {
@@ -31,9 +32,11 @@ const Keys = ({
       onPointerOver={() => document.body.style.cursor = 'pointer'}
       onPointerOut={() => document.body.style.cursor = 'default'}
     />
+
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_SOUTH.path : HUDImages.KEY_SOUTH.path}
       transparent
+      toneMapped={false}
       position={[0, -1.2, 0]}
 
       onClick={() => {
@@ -48,6 +51,7 @@ const Keys = ({
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_EAST.path : HUDImages.KEY_EAST.path}
       transparent
+      toneMapped={false}
       position={[1.2, -1.2, 0]}
 
       onClick={() => {
@@ -62,6 +66,7 @@ const Keys = ({
     <Image
       url={in_combat ? HUDImages.DISABLED_BUTTON_WEST.path : HUDImages.KEY_WEST.path}
       transparent
+      toneMapped={false}
       position={[-1.2, -1.2, 0]}
 
       onClick={() => {
@@ -76,6 +81,7 @@ const Keys = ({
     <Image
       url={in_combat ? HUDImages.KEY_ROLL.path : HUDImages.DISABLED_ROLL.path}
       transparent
+      toneMapped={false}
       position={[3.5, -1.2, 0]}
       scale={HUDImages.KEY_ROLL.scale}
 
@@ -91,6 +97,7 @@ const Keys = ({
     <Image
       url={HUDImages.KEY_POTION.path}
       transparent
+      toneMapped={false}
       position={[2.48, 0, 0]}
       scale={HUDImages.KEY_POTION.scale}
       onClick={() => onClick(KEYBOARD.POTION)}

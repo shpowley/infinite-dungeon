@@ -6,5 +6,6 @@ blender
 ## FILES
 package-lock.json
 NOTES.txt
+POST-MORTEM.txt
 PROGRESS.txt
 README.md

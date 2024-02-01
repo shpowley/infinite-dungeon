@@ -1107,18 +1107,20 @@ const Experience = () => {
       <Text
         ref={ref_log}
         font={FILE_FONT_BEBAS_NEUE}
-        color={'#2e8fff'}
+        color='#1f5592'
         scale={0.025}
-        anchorX={'left'}
-        anchorY={'bottom'}
+        anchorX='left'
+        anchorY='bottom'
         position={[-0.4 * aspect_ratio, -0.3, 0]}
         visible={[GAME_PHASE.STANDBY, GAME_PHASE.MOVEMENT, GAME_PHASE.COMBAT].includes(game_phase)}
-        text={'THE ADVENTURE BEGINS...'}
-      />
+      >
+        THE ADVENTURE BEGINS...
+        <meshBasicMaterial toneMapped={false} />
+      </Text>
     </ScreenSpace>
 
     {/*
-      DOOR INDICATOR (LOCKED, NEW FLOOR (SKULL), PREVIOUS FLOOR (BLOCKED - X))
+      DOOR INDICATOR (EXIT, FLOOR BOSS ROOM (SKULL), PREVIOUS FLOOR (BLOCKED - "X"))
       - ONLY ONE DOOR INDICATOR PER ANY ROOM SHOULD BE NECESSARY
       */}
     <Suspense fallback={null}>

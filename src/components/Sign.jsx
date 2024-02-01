@@ -185,8 +185,14 @@ const Sign = memo(({ castShadow = false, position, rotation, scale, animation_pr
       <mesh
         castShadow={castShadow}
         geometry={nodes.post_1.geometry}
-        material={materials['sign-post']}
-      />
+      >
+        <meshStandardMaterial
+          map={materials['sign-post'].map}
+          roughness={materials['sign-post'].roughness}
+          side={materials['sign-post'].side}
+          flatShading={true}
+        />
+      </mesh>
 
       <mesh
         castShadow={castShadow}

@@ -21,6 +21,7 @@ const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data,
       color={text_color}
       anchorX={'right'}
     >
+      <meshBasicMaterial toneMapped={false} />
       ENEMY: {data?.label ?? 'NONE'}
     </Text>
 
@@ -32,6 +33,7 @@ const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data,
       <Image
         url={HUDImages.HEART.path}
         transparent
+        toneMapped={false}
         scale={HUDImages.HEART.scale}
       />
       <Text
@@ -41,6 +43,7 @@ const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data,
         position={[0.7, -0.1, 0]}
         anchorX={'left'}
       >
+        <meshBasicMaterial toneMapped={false} />
         {data?.health ?? 0} HP
       </Text>
     </group>
@@ -53,6 +56,7 @@ const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data,
       <Image
         url={HUDImages.SWORD.path}
         transparent
+        toneMapped={false}
         scale={HUDImages.SWORD.scale}
       />
       <Text
@@ -61,6 +65,7 @@ const EnemyInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data,
         position={[0.7, -0.1, 0]}
         anchorX={'left'}
       >
+        <meshBasicMaterial toneMapped={false} />
         {data?.attack ?? 0} ATTACK
       </Text>
     </group>

@@ -101,6 +101,7 @@ const StatInfo = memo(({
       anchorX={'right'}
     >
       FLOOR: {data?.floor_index ?? 1}
+      <meshBasicMaterial toneMapped={false} />
     </Text>
 
     {/* MINIMAP */}
@@ -114,6 +115,7 @@ const StatInfo = memo(({
       <meshBasicMaterial
         color={'white'}
         map={canvas_texture}
+        toneMapped={false}
       />
     </mesh>
   </group>

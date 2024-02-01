@@ -21,6 +21,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
       color={text_color}
       anchorX={'left'}
     >
+      <meshBasicMaterial toneMapped={false} />
       CARDBOARD WARRIOR
     </Text>
 
@@ -31,6 +32,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
       <Image
         url={HUDImages.HEART.path}
         transparent
+        toneMapped={false}
         scale={HUDImages.HEART.scale}
       />
       <Text
@@ -40,6 +42,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
         position={[0.7, -0.1, 0]}
         anchorX={'left'}
       >
+        <meshBasicMaterial toneMapped={false} />
         {data?.health ?? 0} HP
       </Text>
     </group>
@@ -51,6 +54,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
       <Image
         url={HUDImages.SWORD.path}
         transparent
+        toneMapped={false}
         scale={HUDImages.SWORD.scale}
       />
       <Text
@@ -59,6 +63,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
         position={[0.7, -0.1, 0]}
         anchorX={'left'}
       >
+        <meshBasicMaterial toneMapped={false} />
         {data?.attack ?? 0} ATTACK
       </Text>
     </group>
@@ -70,6 +75,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
       <Image
         url={HUDImages.POTIONS.path}
         transparent
+        toneMapped={false}
         scale={HUDImages.POTIONS.scale}
       />
       <Text
@@ -79,6 +85,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
         position={[0.9, -0.1, 0]}
         anchorX={'left'}
       >
+        <meshBasicMaterial toneMapped={false} />
         {data?.potions ?? 0}
       </Text>
     </group>
@@ -90,6 +97,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
       <Image
         url={HUDImages.COINS.path}
         transparent
+        toneMapped={false}
         scale={HUDImages.COINS.scale}
       />
       <Text
@@ -99,6 +107,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
         position={[1.0, -0.05, 0]}
         anchorX={'left'}
       >
+        <meshBasicMaterial toneMapped={false} />
         {data?.gold ?? 0}
       </Text>
     </group>
@@ -108,6 +117,7 @@ const PlayerInfo = memo(({ game_phase = GAME_PHASE.START, aspect_ratio = 1, data
       visible={data?.key ?? false}
       url={HUDImages.KEY.path}
       transparent
+      toneMapped={false}
       scale={HUDImages.KEY.scale}
       position={[1.1, -7, 0]}
     />
